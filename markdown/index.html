@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>FreeCodeCamp - Markdown Preview</title>
+    <script src="./bower_components/react/react.min.js" charset="utf-8"></script>
+    <script src="./bower_components/react/react-dom.min.js" charset="utf-8"></script>
+    <script src="./bower_components/babel-browser/browser.js" charset="utf-8"></script>
+    <script src="./bower_components/marked/marked.min.js" charset="utf-8"></script>
+  </head>
+  <body>
+    <div id='app'></app>
+  </body>
+  <script type="text/babel">
+
+    var Source = React.createClass({
+      render: function() {
+          return (
+            <div>
+              <textarea onChange={this.props.onChange}>
+                {this.props.children}
+              </textarea>
+              <button onClick={this.props.onClick}>Update</button>
+            </div>
+          );
+      }
+    });
+
+    var Markdown = React.createClass({
+      getInitialState: function() {
+        return {
+          content: '# Test ',
+          markdown: ''
+        };
+      },
+      updateContent: function(e) {
+        this.setState({
+          content: e.target.value,
+          markdown: marked(e.target.value)
+        });
+      },
+      renderMarkup: function(){
+        return {__html: marked(this.state.content)};
+      },
+      render: function() {
+        return (
+          <div>
+            <Source
+              onChange={this.updateContent}>
+                {this.state.content}
+            </Source>
+            <div dangerouslySetInnerHTML={this.renderMarkup()} />
+          </div>
+        );
+      }
+    });
+    ReactDOM.render(
+       <Markdown />,
+       document.getElementById('app')
+     );
+  </script>
+</html>
