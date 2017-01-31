@@ -57,5 +57,6 @@ div.title {
   vertical-align: middle;
 }
 .user>td>.name:before {
-  padding-right:1em;
+  content: ' ';
+  padding-right: .5em;
 }

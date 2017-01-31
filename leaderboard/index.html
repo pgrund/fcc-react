@@ -19,21 +19,40 @@
         recent: 'https://fcctop100.herokuapp.com/api/fccusers/top/recent',
         alltime: 'https://fcctop100.herokuapp.com/api/fccusers/top/alltime'
       },
+      toggleSelection: function() {
+        var nextState = (this.state.selection == 'recent' ? 'alltime' : 'recent');
+        this.getUsers(nextState);
+      },
       getInitialState: function() {
         return {
-          users : []
+          users : [],
+          selection: 'recent',
+          inProgress: true
         };
       },
 
       componentDidMount: function() {
+        console.log('mount', this.state);
+        this.getUsers(this.state.selection);
+      },
+      componentDidUpdate: function(prevProps, prevState) {
+        console.log('update', this.state, prevState);
+        // this.getUsers(this.links[nextState.selection]);
+      },
+      getUsers: function( state ) {
+
         var _this = this;
-        var link = this.links[this.props.selection];
-        this.serverRequest = fetch(new Request(link))
+        this.setState({
+          inProgress: true
+        });
+        this.serverRequest = fetch(new Request(this.links[state]))
           .then(function(response) {
             return response.json()
               .then(function(json) {
                 _this.setState({
-                  users: json
+                  selection: state,
+                  users: json,
+                  inProgress: false
                 });
               });
           });
@@ -41,6 +60,7 @@
 
       componentWillUnmount: function() {
          this.serverRequest.abort();
+         this.setState({inProgress: false});
        },
 
       render: function() {
@@ -65,9 +85,15 @@
             </tr>
           );
         });
+
+        var switching = (<button onClick={this.toggleSelection}>switch</button>);
+        if (this.state.inProgress) {
+         switching = <span>Loading...</span>;
+        }
         return (
           <div>
-            <h1>{this.props.selection}</h1>
+            <h1>{this.state.selection}</h1>
+            {switching}
             <table>
              <thead>
                <tr>
@@ -87,7 +113,7 @@
     });
 
     ReactDOM.render(
-      <FetchDemo selection="recent"/>,
+      <FetchDemo />,
       document.getElementById('app')
     );
 
