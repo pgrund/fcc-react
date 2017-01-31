@@ -7,48 +7,33 @@
     <script src="./bower_components/react/react-dom.min.js" charset="utf-8"></script>
     <script src="./bower_components/babel-browser/browser.js" charset="utf-8"></script>
     <script src="./bower_components/marked/marked.min.js" charset="utf-8"></script>
+    <link rel="stylesheet" href="./css/style.css">
   </head>
   <body>
-    <div id='app'></app>
+    <h2>Markdown Preview</h2>
+    <div id='app'>
+    </app>
   </body>
   <script type="text/babel">
-
-    var Source = React.createClass({
-      render: function() {
-          return (
-            <div>
-              <textarea onChange={this.props.onChange}>
-                {this.props.children}
-              </textarea>
-              <button onClick={this.props.onClick}>Update</button>
-            </div>
-          );
-      }
-    });
-
     var Markdown = React.createClass({
       getInitialState: function() {
         return {
-          content: '# Test ',
-          markdown: ''
+          content: ''
         };
       },
       updateContent: function(e) {
         this.setState({
-          content: e.target.value,
-          markdown: marked(e.target.value)
+          content: e.target.value
         });
       },
       renderMarkup: function(){
-        return {__html: marked(this.state.content)};
+        var opts = { gfm: true };
+        return {__html: marked(this.state.content), opts};
       },
       render: function() {
         return (
-          <div>
-            <Source
-              onChange={this.updateContent}>
-                {this.state.content}
-            </Source>
+          <div style={{width: '100%'}}>
+            <textarea value={this.state.content} onChange={this.updateContent}/>
             <div dangerouslySetInnerHTML={this.renderMarkup()} />
           </div>
         );
