@@ -27,36 +27,56 @@ div.title {
   margin-bottom: 10px;
 }
 
+#app div.alert {
+  position: absolute;
+  top: 20%;
+  left: 30%;
+  width: 30%;
+  /*min-height: 100px;*/
+
+  text-align: center;
+  font-size: 32px;
+}
+#app div.loading>span {
+  margin-top: 20px;
+
+  font-family: 'Helvetica Sans Serif';
+  color: white;
+  text-shadow: 2px 2px black;
+}
 #app>div {
   width: 100%;
+  min-height: 2em;
+  padding: 15px;
+  background-color: white;
+  box-shadow: 5px 5px 10px black;
 }
-#app>div>textarea {
-  width: 400px;
-  height: 700px;
-  border: solid thin lightblue;
-  margin-right:10px;
-}
-#app>div>div {
-  width: 400px;
-  min-height: 700px;
-  padding: 5px;
-  border: solid thin lightblue;
-  background-color: none;
-  float:right;
-}
-
-.user>td>img {
-  width: 20px;
-  height: 20px;
-  padding: 5px;
+.user img {
+  width: 30px;
+  height: 30px;
+  padding: 2px;
+  margin-right: 1em;
   border-radius: 5px;
-  border: solid thin black;
-  box-shadow: 3px 2px darkgray;
+  box-shadow: 2px 2px 3px darkgray;
 }
-.user>td {
+.user>div {
   vertical-align: middle;
+  min-height: 2em;
 }
-.user>td>.name:before {
+.user>div>.name:before {
   content: ' ';
   padding-right: .5em;
+}
+.user.row>div::even {
+
+}
+#app div button {
+  disabled: true;
+}
+#app div button.active {
+  disabled: false;
+  border: solid thick lightblue;
+}
+#app div button.active:hover {
+  cursor: pointer;
 }

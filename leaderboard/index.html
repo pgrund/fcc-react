@@ -6,116 +6,12 @@
     <script src="./bower_components/react/react.min.js" charset="utf-8"></script>
     <script src="./bower_components/react/react-dom.min.js" charset="utf-8"></script>
     <script src="./bower_components/babel-browser/browser.js" charset="utf-8"></script>
+    <link rel="stylesheet" href="./bower_components/bootstrap/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="./css/style.css">
   </head>
   <body>
     <h2>Camper Leaderboard</h2>
     <div id='app'></div>
   </body>
-  <script type="text/babel">
-
-    var FetchDemo = React.createClass({
-      links: {
-        recent: 'https://fcctop100.herokuapp.com/api/fccusers/top/recent',
-        alltime: 'https://fcctop100.herokuapp.com/api/fccusers/top/alltime'
-      },
-      toggleSelection: function() {
-        var nextState = (this.state.selection == 'recent' ? 'alltime' : 'recent');
-        this.getUsers(nextState);
-      },
-      getInitialState: function() {
-        return {
-          users : [],
-          selection: 'recent',
-          inProgress: true
-        };
-      },
-
-      componentDidMount: function() {
-        console.log('mount', this.state);
-        this.getUsers(this.state.selection);
-      },
-      componentDidUpdate: function(prevProps, prevState) {
-        console.log('update', this.state, prevState);
-        // this.getUsers(this.links[nextState.selection]);
-      },
-      getUsers: function( state ) {
-
-        var _this = this;
-        this.setState({
-          inProgress: true
-        });
-        this.serverRequest = fetch(new Request(this.links[state]))
-          .then(function(response) {
-            return response.json()
-              .then(function(json) {
-                _this.setState({
-                  selection: state,
-                  users: json,
-                  inProgress: false
-                });
-              });
-          });
-      },
-
-      componentWillUnmount: function() {
-         this.serverRequest.abort();
-         this.setState({inProgress: false});
-       },
-
-      render: function() {
-        var imgStyle = {
-          width: 20,
-          height: 20,
-          padding: 5,
-          borderRadius: 5,
-          border: 'solid thin black',
-          boxShadow: '3px 2px darkgray'
-        };
-        var userItems = this.state.users.map(function(user, idx) {
-          return (
-            <tr className='user'>
-              <td>{idx+1}</td>
-              <td>
-                <img src={user.img} />
-                <span className='name'>{user.username}</span>
-              </td>
-              <td>{user.recent}</td>
-              <td>{user.alltime}</td>
-            </tr>
-          );
-        });
-
-        var switching = (<button onClick={this.toggleSelection}>switch</button>);
-        if (this.state.inProgress) {
-         switching = <span>Loading...</span>;
-        }
-        return (
-          <div>
-            <h1>{this.state.selection}</h1>
-            {switching}
-            <table>
-             <thead>
-               <tr>
-                 <td>#</td>
-                 <td>Camper</td>
-                 <td>Points in past 30 days</td>
-                 <td>All time points</td>
-               </tr>
-             </thead>
-             <tbody>
-              {userItems}
-             </tbody>
-            </table>
-          </div>
-        );
-      }
-    });
-
-    ReactDOM.render(
-      <FetchDemo />,
-      document.getElementById('app')
-    );
-
-  </script>
+  <script type="text/babel" src="./js/app.js"></script>
 </html>
