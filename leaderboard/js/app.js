@@ -5,8 +5,8 @@ var Spinner = React.createClass({
   render: function() {
     return (this.props.show ? (<div className='alert alert-warning' role="alert">
       <p>Loading ...</p>
-      <span className="glyphicon glyphicon-refresh" />
-    </div>) : <span className='hidden'/>);
+      <span className='glyphicon glyphicon-refresh' />
+    </div>) : <span />);
   }
 });
 
@@ -62,7 +62,7 @@ var Button = React.createClass({
         return {
           users : [],
           selection: 'recent',
-          inProgress: true
+          inProgress: true,
         };
       },
 
@@ -73,18 +73,28 @@ var Button = React.createClass({
         console.log('remote call for users of', state);
         var _this = this;
         this.setState({
-          inProgress: true
+          inProgress: true,
         });
         this.serverRequest = fetch(new Request(this.links[state]))
           .then(function(response) {
-            return response.json()
-              .then(function(json) {
-                _this.setState({
-                  selection: state,
-                  users: json,
-                  inProgress: false
+            if(response.ok) {
+              return response.json()
+                .then(function(json) {
+                  _this.setState({
+                    selection: state,
+                    users: json,
+                    inProgress: false
+                  });
                 });
-              });
+              } else {
+                // no successfull call, but feedback from API
+                _this.setState({inProgress: false});
+                console.error(response.status, response.statusText);
+              }
+          })
+          .catch(function(error){
+              _this.setState({inProgress: false});
+              console.error("Error during fetch:",error);
           });
       },
 
