@@ -13,6 +13,7 @@ class Recipe extends React.Component {
     this.handleSubmit = this.handleSubmit.bind(this);
     this.handleDelete = this.handleDelete.bind(this);
     this.toggleEdit = this.toggleEdit.bind(this);
+    this.reset = this.reset.bind(this);
   }
 
   handleDelete() {
@@ -47,6 +48,12 @@ class Recipe extends React.Component {
     this.setState({ingredients: evt.target.value.split(',')});
   }
 
+  reset(){
+    this.setState({
+      title: this.props.title ? this.props.title : '',
+      ingredients: this.props.ingredients ? this.props.ingredients : []
+    });
+  }
   toggleEdit() {
     this.setState({editable: true});
   }
@@ -54,15 +61,30 @@ class Recipe extends React.Component {
   render() {
     let item ;
     if(this.state.editable) {
-      item = (
-        <div>
-          <input type="text" value={this.state.title} onChange={this.changeTitle}/>
-          <input type="text" value={this.state.ingredients.join(',')} onChange={this.changeIngredients} />
-          <button onClick={this.handleSubmit}>{this.props.new ? 'add' :'submit'}</button>
-          <button onClick={this.handleDelete}>delete</button>
-        </div>
-      );
+      // changes allowed
+      if(this.props.new) {
+        // new entry
+        item = (
+          <div>
+            <input type="text" value={this.state.title} onChange={this.changeTitle}/>
+            <input type="text" value={this.state.ingredients.join(',')} onChange={this.changeIngredients} />
+            <button onClick={this.handleSubmit}>add</button>
+            <button onClick={this.reset}>cancel</button>
+          </div>
+        );
+      } else {
+        // change existing
+        item = (
+          <div>
+            <input type="text" value={this.state.title} onChange={this.changeTitle}/>
+            <input type="text" value={this.state.ingredients.join(',')} onChange={this.changeIngredients} />
+            <button onClick={this.handleSubmit}>submit</button>
+            <button onClick={this.handleDelete}>delete</button>
+          </div>
+        );
+      }
     } else {
+      // no changes allowed, display only
       item = (<p className="title" onDoubleClick={this.toggleEdit}>{this.state.title}</p>);
     }
     return (
@@ -131,9 +153,9 @@ RecipeBox.propTypes = {
 
 function store(recipes) {
   if(recipes) {
-    localStorage.setItem('myRecipes', JSON.stringify(recipes));
+    localStorage.setItem('_pgrund_recipes', JSON.stringify(recipes));
   }
-  let stored = localStorage.getItem('myRecipes');
+  let stored = localStorage.getItem('_pgrund_recipes');
   stored = (stored ? JSON.parse(stored) : []);
   return stored;
 }
