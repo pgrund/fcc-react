@@ -26,14 +26,12 @@ div.title {
   width: 1200px;
   margin-bottom: 10px;
 }
-
+/*
 #app div.alert {
   position: absolute;
   top: 20%;
   left: 30%;
   width: 30%;
-  /*min-height: 100px;*/
-
   text-align: center;
   font-size: 32px;
 }
@@ -44,6 +42,7 @@ div.title {
   color: white;
   text-shadow: 2px 2px black;
 }
+*/
 #app>div {
   width: 100%;
   min-height: 2em;
@@ -51,6 +50,7 @@ div.title {
   background-color: white;
   box-shadow: 5px 5px 10px black;
 }
+/*
 .user img {
   width: 30px;
   height: 30px;
@@ -80,3 +80,7 @@ div.title {
 #app div button.active:hover {
   cursor: pointer;
 }
+
+#app .title {
+  text-transform: capitalize;
+}*/
