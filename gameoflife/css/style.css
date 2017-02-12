@@ -33,3 +33,15 @@ div.title {
   background-color: white;
   box-shadow: 5px 5px 10px black;
 }
+
+.cell {
+  width: 20px;
+  height: 20px;
+  text-align: center;
+  border: solid thin black;
+  display: inline-block;
+  margin: 1px;
+}
+.cellRow {
+  display: block;
+}
