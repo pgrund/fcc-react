@@ -50,41 +50,49 @@ class Game extends React.Component {
       }
       return amount;
     }
+    function cellInNextIteration(neighbors, boolValue) {
+      switch (neighbors) {
+        case 0: case 1:
+            //Any live cell with fewer than two live neighbours dies, as if caused by underpopulation.
+            return false;
+        case 2:
+            //Any live cell with two or three live neighbours lives on to the next generation.
+            return boolValue;
+        case 3:
+            //Any live cell with two or three live neighbours lives on to the next generation.
+            //Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
+            return true;
+        default:
+            //Any live cell with more than three live neighbours dies, as if by overpopulation.
+            return false;
+      }
+    }
+    function anyCellsLeft(arr) {
+      return arr.map(row => row.some(val => val)).some(val => val);
+    }
+
     let next = [];
     for(let i = 0; i < this.props.dimension; i++) {
       let row = [];
       for(let j=0; j < this.props.dimension; j++) {
-        let result;
-        switch (getNeighborsAlive(i,j)) {
-          case 0: case 1:
-              //Any live cell with fewer than two live neighbours dies, as if caused by underpopulation.
-              row.push(false);
-              break;
-          case 2:
-              //Any live cell with two or three live neighbours lives on to the next generation.
-              row.push(this.state.cells[i][j]);
-              break;
-          case 3:
-              //Any live cell with two or three live neighbours lives on to the next generation.
-              //Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
-              row.push(true);
-              break;
-          default:
-              //Any live cell with more than three live neighbours dies, as if by overpopulation.
-              row.push(false);
-        }
+        row.push(cellInNextIteration(getNeighborsAlive(i,j), this.state.cells[i][j]));
       }
       next.push(row);
     };
+
     this.setState({
       generation: (this.state.generation+1),
       cells: next
     });
+    if(!anyCellsLeft(next)) {
+      console.log("no cells left");
+      this.handlePause();
+    }
   }
 
   handleRun() {
     this.setState({
-      timer: setInterval(this.nextIteration, 2000)
+      timer: setInterval(this.nextIteration, this.props.interval * 1000)
     })
   }
   handlePause() {
@@ -111,16 +119,21 @@ class Game extends React.Component {
       );
     }
     return (
-      <div className="game ">
+      <div className="game text-center">
        {this.state.cells.map (row => renderRow(row))}
        <div>
          <span>Generation: {this.state.generation}</span>
        </div>
        <div className="buttons">
-         <button onClick={this.nextIteration}>next</button>
-         <button onClick={this.handleRun}>run</button>
-         <button onClick={this.handlePause}>pause</button>
-         <button onClick={this.handleClear}>clear</button>
+         <button className="btn btn-success" onClick={this.handleRun} title="play">
+           <span className="glyphicon glyphicon-play" />
+         </button>
+         <button className="btn btn-warning" onClick={this.handlePause} title="pause">
+           <span className="glyphicon glyphicon-pause" />
+         </button>
+         <button className="btn btn-danger" onClick={this.handleClear} title="clear">
+           <span className="glyphicon glyphicon-plus-sign" />
+         </button>
        </div>
       </div>
     );
@@ -130,7 +143,8 @@ Game.propTypes = {
   dimension: React.PropTypes.number.isRequired
 }
 Game.defaultProps = {
-  dimension: 5
+  dimension: 15,
+  interval: 0.3
 }
 
 ReactDOM.render(

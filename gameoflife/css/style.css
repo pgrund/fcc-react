@@ -31,16 +31,19 @@ div.title {
   min-height: 2em;
   padding: 15px;
   background-color: white;
-  box-shadow: 5px 5px 10px black;
+  box-shadow: 5px 3px 3px black;
+  opacity: .7;
 }
 
 .cell {
   width: 20px;
   height: 20px;
   text-align: center;
-  border: solid thin black;
   display: inline-block;
+  border: solid thin darkgray;
   margin: 1px;
+  color: black;
+  text-shadow: 2px 2px darkgray;
 }
 .cellRow {
   display: block;
