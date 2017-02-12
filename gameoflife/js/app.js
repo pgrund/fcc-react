@@ -26,6 +26,7 @@ class Game extends React.Component {
 
     this.generateCells = this.generateCells.bind(this);
     this.nextIteration = this.nextIteration.bind(this);
+
     this.handleClear = this.handleClear.bind(this);
     this.handlePause = this.handlePause.bind(this);
     this.handleRun = this.handleRun.bind(this);
@@ -36,12 +37,42 @@ class Game extends React.Component {
         Math.random() < .5
       ));
   }
+
   nextIteration() {
+    let _this = this;
+    function getNeighborsAlive(i,j) {
+      let amount = 0;
+      for(let i1=i-1; i1 <= i+1; i1++) {
+        for(let j1=j-1; j1 <= j+1; j1++) {
+          if(i1 < 0 || j1 < 0 || i1 >= _this.props.dimension || j1 >= _this.props.dimension || (i==i1 && j==j1)) continue;
+          if(_this.state.cells[i1][j1])amount ++
+        }
+      }
+      return amount;
+    }
     let next = [];
     for(let i = 0; i < this.props.dimension; i++) {
       let row = [];
       for(let j=0; j < this.props.dimension; j++) {
-        row.push(!this.state.cells[i][j]);
+        let result;
+        switch (getNeighborsAlive(i,j)) {
+          case 0: case 1:
+              //Any live cell with fewer than two live neighbours dies, as if caused by underpopulation.
+              row.push(false);
+              break;
+          case 2:
+              //Any live cell with two or three live neighbours lives on to the next generation.
+              row.push(this.state.cells[i][j]);
+              break;
+          case 3:
+              //Any live cell with two or three live neighbours lives on to the next generation.
+              //Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
+              row.push(true);
+              break;
+          default:
+              //Any live cell with more than three live neighbours dies, as if by overpopulation.
+              row.push(false);
+        }
       }
       next.push(row);
     };
