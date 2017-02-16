@@ -48,3 +48,9 @@ div.title {
 .cellRow {
   display: block;
 }
+.cell.died {
+  background-color: lightgray;
+}
+.cell.born {
+  color: green
+}
