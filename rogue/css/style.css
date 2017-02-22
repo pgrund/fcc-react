@@ -77,10 +77,41 @@ div.tile {
 div.tile>i {
   font-size: 20px;
   padding: 1px;
+  text-shadow: 2px 2px lightgray;
 }
 div.tile.wall {
   background-color: black;
 }
+div.tile.hero>i,
+div.tile.hero>i:before,
+div.tile.weapon>i,
+div.tile.weapon>i:before {
+  color: green;
+}
+div.tile.hero>i:before {
+  content: '\f007'
+}
+
+div.tile.enemy>i,
+div.tile.enemy>i:before {
+  color: blue;
+}
+div.tile.enemy>i:before {
+  content: '\f21b'
+}
+
+div.tile.health>i,
+div.tile.health>i:before {
+  color: red;
+}
+div.tile.health>i:before {
+  content: '\f0fa'
+}
+
+div.tile.weapon>i:before {
+  content: '\f06b'
+}
+
 
 div.tile.blackedout {
   background-color: black;

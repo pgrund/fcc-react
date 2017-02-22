@@ -15,35 +15,8 @@ class Tile extends React.Component {
     }
   }
   render() {
-    var cell;
-    switch (this.props.type) {
-      case HERO:
-        // hero
-        cell = <div className="tile"><i className="fa fa-user text-sucess" /></div>;
-        break;
-      case ENEMY:
-        // enemy
-        cell = <div className="tile"><i className="fa fa-user-secret text-info" /></div>;
-        break;
-      case WEAPON:
-        // weapon
-        cell = <div className="tile"><i className="fa fa-legal text-success" /></div>;
-        break;
-      case HEALTH:
-        // health
-        cell = <div className="tile"><i className="fa fa-medkit text-danger" /></div>;
-        break;
-      case WALL:
-        // wall
-        cell = <div className="tile wall"/>;
-        break;
-      case EMPTY: default:
-        // empty, default
-        cell = <div className="tile empty" />;
-        break;
-
-    }
-    return (this.state.visible ? cell : <div className="tile blackedout"/> );
+    var names = ['empty', 'wall', 'health', 'weapon', 'enemy', 'hero'];
+    return (this.state.visible ? <div className={"tile " + names[this.props.type]}><i className="fa"/></div> : <div className="tile blackedout"/> );
   }
 }
 Tile.propTypes = {
@@ -54,6 +27,23 @@ Tile.defaultProps = {
   type: 0
 }
 
+class Info extends React.Component {
+  render() {
+    var weapons = ['stick', 'knife', 'dagger', 'sword'];
+    return (
+      <ul className="info-bar">
+        <li>Health: {this.props.health}</li>
+        <li>Weapon: {weapons[Math.floor(this.props.weapon/7)]}</li>
+        <li>Attack: {this.props.weapon}</li>
+      </ul>
+    );
+  }
+}
+Info.propTypes = {
+  health: React.PropTypes.number.isRequired,
+  weapon: React.PropTypes.number.isRequired,
+  level: React.PropTypes.number.isRequired
+}
 class Game extends React.Component {
     constructor(props) {
       super(props);
@@ -61,7 +51,12 @@ class Game extends React.Component {
       this.state = {
         peek: false,
         worldmap: map,
-        hero: this.findHeroInMap(map)
+        hero: {
+          coord: this.findHeroInMap(map),
+          health: 100,
+          weapon: 7,
+          level: 0
+        }
       };
 
       this.generateMap = this.generateMap.bind(this);
@@ -81,58 +76,62 @@ class Game extends React.Component {
       for(let x = 0; x < gameMap.length; x++) {
         for(let y = 0; y < gameMap[0].length; y++) {
           if(gameMap[x][y] == HERO) {
-            return { x: x, y: y};
+            return {x: x, y: y};
           }
         }
       }
+      throw new Error('no hero in worldmap found');
     }
 
     handleMove(event) {
       var hero = this.state.hero;
       var nextMap = this.state.worldmap.map(row => row.map(cell => cell));
       function moveTo(dx, dy) {
-        var oldX = hero.x,
-            oldY = hero.y,
-            newX = hero.x + dx,
-            newY = hero.y + dy;
-
-        if( hero.x + dx >= nextMap.length || hero.x + dx < 0 ||
-            hero.y + dy >= nextMap[0].length || hero.y + dy < 0 ) {
+        var oldX = hero.coord.x,
+            oldY = hero.coord.y,
+            newX = hero.coord.x + dx,
+            newY = hero.coord.y + dy;
+        // check out of boundary
+        if( hero.coord.x + dx >= nextMap.length || hero.coord.x + dx < 0 ||
+            hero.coord.y + dy >= nextMap[0].length || hero.coord.y + dy < 0 ) {
               console.log('leaving worldmap');
               return;
         }
 
-
         switch (nextMap[newX][newY]) {
           case EMPTY:
-            hero.x = newX;
-            hero.y = newY;
+            hero.coord = {
+              x : newX,
+              y : newY
+            };
             nextMap[oldX][oldY] = EMPTY;
-            nextMap[hero.x][hero.y] = HERO;
+            nextMap[newX][newY] = HERO;
             break;
           case WALL:
             console.log('bang your head !!!');
             break;
           case HEALTH:
             console.log('picked up health');
-            hero.x = newX;
-            hero.y = newY;
+            hero.health += 20;
+            hero.coord = {
+              x : newX,
+              y : newY
+            };
             nextMap[oldX][oldY] = EMPTY;
-            nextMap[hero.x][hero.y] = HERO;
+            nextMap[newX][newY] = HERO;
             break;
           case WEAPON:
             console.log('picked up weapon');
-            hero.x = newX;
-            hero.y = newY;
+            hero.weapon += 7;
+            hero.coord = {
+              x : newX,
+              y : newY
+            };
             nextMap[oldX][oldY] = EMPTY;
-            nextMap[hero.x][hero.y] = HERO;
+            nextMap[newX][newY] = HERO;
             break;
           case ENEMY:
             console.log('FIGHT !!!!');
-            hero.x = newX;
-            hero.y = newY;
-            nextMap[oldX][oldY] = EMPTY;
-            nextMap[hero.x][hero.y] = HERO;
             break;
           default:
             console.log('unknown', nextMap[newX][newY]);
@@ -213,7 +212,10 @@ class Game extends React.Component {
       var worldmap = this.state.worldmap;
       return (
         <div>
-          <span>Game</span>
+          <h3>Game</h3>
+          <Info health={this.state.hero.health}
+            weapon={this.state.hero.weapon}
+            level={this.state.hero.level}/>
           <div className="worldmap">
           {worldmap.map( (row, y) =>
             <div className="tilerow">
