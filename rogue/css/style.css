@@ -55,10 +55,10 @@ div.title {
   background-color: white;
   /*opacity: .7;*/
 }
-div.worldmap {
+div.dungeon {
   text-align: center;
 }
-div.tilerow {
+div.tile-row {
   display: block;
   height: 20px;
   margin: 0;
@@ -72,15 +72,15 @@ div.tile {
   vertical-align: middle;
   margin: 0;
   padding: 0;
-  /*border: solid thin black;*/
+  background-color: lightgray;
 }
 div.tile>i {
   font-size: 20px;
   padding: 1px;
-  text-shadow: 2px 2px lightgray;
+  text-shadow: 2px 2px darkgray;
 }
 div.tile.wall {
-  background-color: black;
+  background: no-repeat center/100% url('../img/bricks.png');
 }
 div.tile.hero>i,
 div.tile.hero>i:before,

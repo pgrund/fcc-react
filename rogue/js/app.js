@@ -51,7 +51,7 @@ class Game extends React.Component {
       var map = this.generateMap();
       this.state = {
         peek: false,
-        worldmap: map,
+        dungeon: map,
         hero: {
           coord: this.findTileInMap(map, TILE_HERO)[0],
           health: 100,
@@ -86,7 +86,7 @@ class Game extends React.Component {
           }
         }
       }
-      if(res.length == 0) throw new Error('no hero in worldmap found');
+      if(res.length == 0 && tile == TILE_HERO) throw new Error('no hero in worldmap found');
       return res;
     }
 
@@ -112,9 +112,10 @@ class Game extends React.Component {
     }
 
     handleMove(event) {
-      var fightEnemy = this.fightEnemy;
+      var fightEnemy = this.fightEnemy,
+          findTileInMap = this.findTileInMap;
       var hero = this.state.hero;
-      var nextMap = this.state.worldmap.map(row => row.map(cell => cell));
+      var nextMap = this.state.dungeon.map(row => row.map(cell => cell));
       function moveTo(dx, dy) {
         var oldX = hero.coord.x,
             oldY = hero.coord.y,
@@ -163,6 +164,10 @@ class Game extends React.Component {
             if(fightEnemy(newX, newY)) {
               nextMap[oldX][oldY] = TILE_EMPTY;
               nextMap[newX][newY] = TILE_HERO;
+
+              if(findTileInMap(nextMap, TILE_ENEMY).length == 0) {
+                  console.log("SUCCESS !!! you beatup all enemies in this dungeon")
+              }
             }
             break;
           default:
@@ -186,8 +191,8 @@ class Game extends React.Component {
           console.log('not reacting on', event)
       }
       this.setState({
-        worldmap: nextMap,
-        TILE_HERO: TILE_HERO
+        dungeon: nextMap,
+        hero: hero
       });
     }
 
@@ -241,16 +246,16 @@ class Game extends React.Component {
       ];
     }
     render() {
-      var worldmap = this.state.worldmap;
+      var dungeon = this.state.dungeon;
       return (
         <div>
           <h3>Game</h3>
           <Info health={this.state.hero.health}
             weapon={this.state.hero.weapon}
             level={this.state.hero.level}/>
-          <div className="worldmap">
-          {worldmap.map( (row, y) =>
-            <div className="tilerow">
+          <div className="dungeon">
+          {dungeon.map( (row, y) =>
+            <div className="tile-row">
              { row.map((value, x) =>
                <Tile coord={[x,y]} type={value} />
              )}
@@ -263,13 +268,9 @@ class Game extends React.Component {
 }
 
 Game.propTypes = {
-  titleDimension: React.PropTypes.array.isRequired,
-  screenDimension: React.PropTypes.array.isRequired,
   visibleRadius: React.PropTypes.number.isRequires
 }
 Game.defaultProps = {
-  titleDimension: [1,1],
-  screenDimension: [80, 80],
   visibleRadius: [12]
 }
 
