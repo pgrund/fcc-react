@@ -1,0 +1,87 @@
+
+body {
+  background-color: #ddd;
+  background-repeat: repeat;
+  background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAACgCAMAAACsXRuGAAAADFBMVEWIiIjd3d3y8vLm5uZzdc63AAAAbklEQVR42u3ZIQ4AIAwDwI39/8/wAlTFxFUgm5ALmFZV51Iv52Vyx/7CzhdONr3/ylCgQIECBQoUKFCgQIECBQoUKFCgQIECBcrmccGe4qX4vqBAgQIFChQoUKBAgQIFChQoUKBAgQIFij3lX3gBXBBzc8FaGvIAAAAASUVORK5CYII=)
+}
+h2 {
+  text-transform: uppercase;
+  color: white;
+  background-color: black;
+}
+h2 {
+  text-align: center;
+}
+#app {
+  background-color: whitesmoke;
+  width: 900px;
+  min-height: 200px;
+  padding: 5px;
+  margin-left: auto;
+  margin-right: auto;
+  position: relative;
+}
+#app:before, #app:after
+{
+  z-index: -1;
+  position: absolute;
+  content: "";
+  bottom: 15px;
+  left: 10px;
+  width: 50%;
+  top: 80%;
+  max-width:300px;
+  background: #777;
+  box-shadow: 0 15px 10px #777;
+  transform: rotate(-3deg);
+}
+#app:after
+{
+  transform: rotate(3deg);
+  right: 10px;
+  left: auto;
+}
+div.title, div.title #app {
+  background-color: lightgray;
+}
+div.title {
+  width: 1200px;
+  margin-bottom: 10px;
+}
+#app>div {
+  width: 100%;
+  min-height: 2em;
+  padding: 15px;
+  background-color: white;
+  /*opacity: .7;*/
+}
+div.worldmap {
+  text-align: center;
+}
+div.tilerow {
+  display: block;
+  height: 20px;
+  margin: 0;
+  padding: 0;
+}
+div.tile {
+  width: 20px;
+  height: 20px;
+  display: inline-block;
+  text-align: center;
+  vertical-align: middle;
+  margin: 0;
+  padding: 0;
+  /*border: solid thin black;*/
+}
+div.tile>i {
+  font-size: 20px;
+  padding: 1px;
+}
+div.tile.wall {
+  background-color: black;
+}
+
+div.tile.blackedout {
+  background-color: black;
+}
