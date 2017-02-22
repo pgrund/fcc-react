@@ -1,9 +1,9 @@
-const HERO  = 5,
-      ENEMY = 4,
-     WEAPON = 3,
-     HEALTH = 2,
-       WALL = 1,
-      EMPTY = 0;
+const TILE_HERO  = 5,
+      TILE_ENEMY = 4,
+     TILE_WEAPON = 3,
+     TILE_HEALTH = 2,
+       TILE_WALL = 1,
+      TILE_EMPTY = 0;
 
 class Tile extends React.Component {
   constructor(props){
@@ -15,7 +15,7 @@ class Tile extends React.Component {
     }
   }
   render() {
-    var names = ['empty', 'wall', 'health', 'weapon', 'enemy', 'hero'];
+    var names = ['type', 'wall', 'health', 'weapon', 'enemy', 'hero'];
     return (this.state.visible ? <div className={"tile " + names[this.props.type]}><i className="fa"/></div> : <div className="tile blackedout"/> );
   }
 }
@@ -40,10 +40,11 @@ class Info extends React.Component {
   }
 }
 Info.propTypes = {
-  health: React.PropTypes.number.isRequired,
-  weapon: React.PropTypes.number.isRequired,
+  TILE_HEALTH: React.PropTypes.number.isRequired,
+  TILE_WEAPON: React.PropTypes.number.isRequired,
   level: React.PropTypes.number.isRequired
 }
+
 class Game extends React.Component {
     constructor(props) {
       super(props);
@@ -52,38 +53,66 @@ class Game extends React.Component {
         peek: false,
         worldmap: map,
         hero: {
-          coord: this.findHeroInMap(map),
+          coord: this.findTileInMap(map, TILE_HERO)[0],
           health: 100,
           weapon: 7,
           level: 0
-        }
+        },
+        enemies: this.findTileInMap(map, TILE_ENEMY).map(e => {return {
+          x: e.x,
+          y: e.y,
+          health: 10,
+          weapon: 7
+        };})
       };
 
       this.generateMap = this.generateMap.bind(this);
-      this.findHeroInMap = this.findHeroInMap.bind(this);
+      this.findTileInMap = this.findTileInMap.bind(this);
       this.placeTileOnMap = this.placeTileOnMap.bind(this);
       this.handleMove = this.handleMove.bind(this);
+      this.fightEnemy = this.fightEnemy.bind(this);
     }
 
     componentDidMount() {
       document.addEventListener("keydown", this.handleMove);
     }
-    componentWillUnmount() {
-      // document.removeEventListener("keydown");
-    }
 
-    findHeroInMap(gameMap) {
+    findTileInMap(gameMap, tile) {
+      var res = []
       for(let x = 0; x < gameMap.length; x++) {
         for(let y = 0; y < gameMap[0].length; y++) {
-          if(gameMap[x][y] == HERO) {
-            return {x: x, y: y};
+          if(gameMap[x][y] == tile) {
+            res.push({x: x, y: y});
           }
         }
       }
-      throw new Error('no hero in worldmap found');
+      if(res.length == 0) throw new Error('no hero in worldmap found');
+      return res;
+    }
+
+    fightEnemy(newX, newY) {
+
+      var hero = this.state.hero;
+      var enemy = this.state.enemies.find(e => e.x == newX && e.y == newY);
+
+      hero.health -= Math.floor(Math.random() * enemy.weapon);
+      enemy.health -= Math.floor(Math.random() * hero.weapon);
+
+      this.setState({
+        enemies: this.state.enemies.map(e => e == enemy ? enemy : e)
+      });
+      if(enemy.health <= 0) {
+        hero.coord.x = newX;
+        hero.coord.y = newY;
+      }
+      this.setState({
+        hero: hero
+      });
+      return enemy.health <= 0;
     }
 
     handleMove(event) {
+      var fightEnemy = this.fightEnemy;
       var hero = this.state.hero;
       var nextMap = this.state.worldmap.map(row => row.map(cell => cell));
       function moveTo(dx, dy) {
@@ -99,39 +128,42 @@ class Game extends React.Component {
         }
 
         switch (nextMap[newX][newY]) {
-          case EMPTY:
+          case TILE_EMPTY:
             hero.coord = {
               x : newX,
               y : newY
             };
-            nextMap[oldX][oldY] = EMPTY;
-            nextMap[newX][newY] = HERO;
+            nextMap[oldX][oldY] = TILE_EMPTY;
+            nextMap[newX][newY] = TILE_HERO;
             break;
-          case WALL:
+          case TILE_WALL:
             console.log('bang your head !!!');
             break;
-          case HEALTH:
-            console.log('picked up health');
+          case TILE_HEALTH:
+            console.log('picked up TILE_HEALTH');
             hero.health += 20;
             hero.coord = {
               x : newX,
               y : newY
             };
-            nextMap[oldX][oldY] = EMPTY;
-            nextMap[newX][newY] = HERO;
+            nextMap[oldX][oldY] = TILE_EMPTY;
+            nextMap[newX][newY] = TILE_HERO;
             break;
-          case WEAPON:
-            console.log('picked up weapon');
+          case TILE_WEAPON:
+            console.log('picked up TILE_WEAPON');
             hero.weapon += 7;
             hero.coord = {
               x : newX,
               y : newY
             };
-            nextMap[oldX][oldY] = EMPTY;
-            nextMap[newX][newY] = HERO;
+            nextMap[oldX][oldY] = TILE_EMPTY;
+            nextMap[newX][newY] = TILE_HERO;
             break;
-          case ENEMY:
-            console.log('FIGHT !!!!');
+          case TILE_ENEMY:
+            if(fightEnemy(newX, newY)) {
+              nextMap[oldX][oldY] = TILE_EMPTY;
+              nextMap[newX][newY] = TILE_HERO;
+            }
             break;
           default:
             console.log('unknown', nextMap[newX][newY]);
@@ -155,7 +187,7 @@ class Game extends React.Component {
       }
       this.setState({
         worldmap: nextMap,
-        hero: hero
+        TILE_HERO: TILE_HERO
       });
     }
 
@@ -179,12 +211,12 @@ class Game extends React.Component {
     }
     generateMap() {
       var gamemap = this.emptyMapWithWalls();
-      this.placeTileOnMap(gamemap, HERO);
+      this.placeTileOnMap(gamemap, TILE_HERO);
       for(var i=0; i< 3; i++) {
-        this.placeTileOnMap(gamemap, ENEMY);
+        this.placeTileOnMap(gamemap, TILE_ENEMY);
       }
-      this.placeTileOnMap(gamemap, HEALTH);
-      this.placeTileOnMap(gamemap, WEAPON);
+      this.placeTileOnMap(gamemap, TILE_HEALTH);
+      this.placeTileOnMap(gamemap, TILE_WEAPON);
       return gamemap;
     }
     emptyMapWithWalls() {
