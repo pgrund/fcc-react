@@ -35,42 +35,35 @@ class Info extends React.Component {
         <li>Health: {this.props.health}</li>
         <li>Weapon: {weapons[Math.floor(this.props.weapon/7)]}</li>
         <li>Attack: {this.props.weapon}</li>
+        <li>Dungeon Level: {this.props.level}</li>
       </ul>
     );
   }
 }
 Info.propTypes = {
-  TILE_HEALTH: React.PropTypes.number.isRequired,
-  TILE_WEAPON: React.PropTypes.number.isRequired,
+  health: React.PropTypes.number.isRequired,
+  weapon: React.PropTypes.number.isRequired,
   level: React.PropTypes.number.isRequired
 }
 
 class Game extends React.Component {
     constructor(props) {
       super(props);
-      var map = this.generateMap();
+      var dungeon = this.generateMap(0);
       this.state = {
-        peek: false,
-        dungeon: map,
-        hero: {
-          coord: this.findTileInMap(map, TILE_HERO)[0],
-          health: 100,
-          weapon: 7,
-          level: 0
-        },
-        enemies: this.findTileInMap(map, TILE_ENEMY).map(e => {return {
-          x: e.x,
-          y: e.y,
-          health: 10,
-          weapon: 7
-        };})
+        peek : false,
+        level : 0,
+        dungeon: dungeon.dungeon,
+        hero: dungeon.hero,
+        enemies: dungeon.enemies
       };
 
       this.generateMap = this.generateMap.bind(this);
       this.findTileInMap = this.findTileInMap.bind(this);
       this.placeTileOnMap = this.placeTileOnMap.bind(this);
       this.handleMove = this.handleMove.bind(this);
-      this.fightEnemy = this.fightEnemy.bind(this);
+      // this.fightEnemy = this.fightEnemy.bind(this);
+      // this.finishedDungeon = this.finishedDungeon.bind(this);
     }
 
     componentDidMount() {
@@ -90,88 +83,118 @@ class Game extends React.Component {
       return res;
     }
 
-    fightEnemy(newX, newY) {
-
-      var hero = this.state.hero;
-      var enemy = this.state.enemies.find(e => e.x == newX && e.y == newY);
-
-      hero.health -= Math.floor(Math.random() * enemy.weapon);
-      enemy.health -= Math.floor(Math.random() * hero.weapon);
-
-      this.setState({
-        enemies: this.state.enemies.map(e => e == enemy ? enemy : e)
-      });
-      if(enemy.health <= 0) {
-        hero.coord.x = newX;
-        hero.coord.y = newY;
-      }
-      this.setState({
-        hero: hero
-      });
-      return enemy.health <= 0;
+    finishedDungeon(map) {
+       if (this.findTileInMap(map, TILE_ENEMY).length == 0) {
+         return 'level completed';
+       } else if (false) {
+         //
+       };
     }
 
+
     handleMove(event) {
-      var fightEnemy = this.fightEnemy,
-          findTileInMap = this.findTileInMap;
+      var game = this;
       var hero = this.state.hero;
-      var nextMap = this.state.dungeon.map(row => row.map(cell => cell));
+
+      var nextState = JSON.parse(JSON.stringify(this.state));
+      var oldX = hero.coord.x,
+          oldY = hero.coord.y;
+
+      function fightEnemy(newX, newY) {
+        var enemy = nextState.enemies.find(e => e.x == newX && e.y == newY);
+        var hit = Math.floor(Math.random() * (hero.fight ? hero.weapon : enemy.weapon));
+        console.log('FIGHTING!!');
+
+        if(hero.fight) {
+          enemy.health -= hit;
+          console.log(`Hero's turn : enemy ${enemy.health} (-${hit})`);
+        } else {
+          nextState.hero.health -= hit;
+          console.log(`Enemy's turn : hero ${nextState.hero.health} (-${hit})`);
+        }
+        game.setState({
+          enemies: nextState.enemies
+        });
+        nextState.hero.fight = !hero.fight;
+        return enemy.health <= 0;
+      }
+
       function moveTo(dx, dy) {
+        var newX = oldX + dx,
+            newY = oldY + dy;
+
+        function moveHero(targetTile = TILE_EMPTY) {
+          nextState.hero.coord.x = newX;
+          nextState.hero.coord.y = newY;
+
+          nextState.dungeon[oldX][oldY] = targetTile;
+          nextState.dungeon[newX][newY] = TILE_HERO;
+        }
+
         var oldX = hero.coord.x,
             oldY = hero.coord.y,
             newX = hero.coord.x + dx,
             newY = hero.coord.y + dy;
         // check out of boundary
-        if( hero.coord.x + dx >= nextMap.length || hero.coord.x + dx < 0 ||
-            hero.coord.y + dy >= nextMap[0].length || hero.coord.y + dy < 0 ) {
+        if( newX >= nextState.dungeon.length || newX < 0 ||
+            newY >= nextState.dungeon[0].length || newY < 0 ) {
               console.log('leaving worldmap');
               return;
         }
 
-        switch (nextMap[newX][newY]) {
+        switch (nextState.dungeon[newX][newY]) {
           case TILE_EMPTY:
-            hero.coord = {
-              x : newX,
-              y : newY
-            };
-            nextMap[oldX][oldY] = TILE_EMPTY;
-            nextMap[newX][newY] = TILE_HERO;
+            moveHero();
             break;
           case TILE_WALL:
             console.log('bang your head !!!');
             break;
           case TILE_HEALTH:
-            console.log('picked up TILE_HEALTH');
-            hero.health += 20;
-            hero.coord = {
-              x : newX,
-              y : newY
-            };
-            nextMap[oldX][oldY] = TILE_EMPTY;
-            nextMap[newX][newY] = TILE_HERO;
+            console.log('picked up some healing ...');
+            nextState.hero.health += 20;
+            moveHero();
             break;
           case TILE_WEAPON:
-            console.log('picked up TILE_WEAPON');
-            hero.weapon += 7;
-            hero.coord = {
-              x : newX,
-              y : newY
-            };
-            nextMap[oldX][oldY] = TILE_EMPTY;
-            nextMap[newX][newY] = TILE_HERO;
+            console.log('improved weapon');
+            nextState.hero.weapon += 7;
+            moveHero();
             break;
           case TILE_ENEMY:
             if(fightEnemy(newX, newY)) {
-              nextMap[oldX][oldY] = TILE_EMPTY;
-              nextMap[newX][newY] = TILE_HERO;
+              moveHero();
+              var checkNextAction = game.finishedDungeon(nextState.dungeon);
+              if(checkNextAction == 'level completed') {
+                  console.log(`SUCCESS !!! you beatup all enemies in dungeon ${game.state.level}`);
+                  var nextLevel = game.state.level+1;
+                  var nextDungeon;
 
-              if(findTileInMap(nextMap, TILE_ENEMY).length == 0) {
-                  console.log("SUCCESS !!! you beatup all enemies in this dungeon")
+                  try {
+                    nextDungeon = game.generateMap(nextLevel);
+                  } catch (e) {
+                    // could not get map for next Level, stick to old one
+                    console.error(e);
+                    nextDungeon = {
+                      dungeon: nextState.dungeon,
+                      hero: nextState.hero
+                    };
+                    nextLevel = game.state.level;
+                  }
+                  nextState.dungeon = nextDungeon.dungeon;
+                  nextState.hero.coord = nextDungeon.hero.coord;
+                  nextState.level = nextLevel
+                  nextState.enemies = nextDungeon.enemies;
+
+                  document.removeEventListener("keydown", game.handleMove);
+                  document.addEventListener("keydown", game.handleMove);
+                  console.log('moving to next level', game.state);
+              } else if (checkNextAction == 'hero dead') {
+                console.log('You died !!');
+                document.removeEventListener("keydown", game.handleMove);
               }
             }
             break;
           default:
-            console.log('unknown', nextMap[newX][newY]);
+            console.log('unknown', nextState.dungeon[newX][newY]);
         }
       }
       switch (event.key) {
@@ -190,10 +213,7 @@ class Game extends React.Component {
         default:
           console.log('not reacting on', event)
       }
-      this.setState({
-        dungeon: nextMap,
-        hero: hero
-      });
+      this.setState(nextState);
     }
 
     placeTileOnMap(gameMap, tile, distance = 5) {
@@ -214,47 +234,47 @@ class Game extends React.Component {
       }
       gameMap[x][y] = tile;
     }
-    generateMap() {
-      var gamemap = this.emptyMapWithWalls();
+    generateMap(level = this.state.level) {
+      var gamemap = this.props.dungeons[level];
+      if(gamemap == undefined) {
+        throw new Error(`no world specified for level ${level}`);
+      }
+      // console.log(`selected dungeon ${level}\n${gamemap.map(row => row.join(',')).join('\n')}`);
       this.placeTileOnMap(gamemap, TILE_HERO);
       for(var i=0; i< 3; i++) {
         this.placeTileOnMap(gamemap, TILE_ENEMY);
       }
       this.placeTileOnMap(gamemap, TILE_HEALTH);
       this.placeTileOnMap(gamemap, TILE_WEAPON);
-      return gamemap;
+
+      return {
+        dungeon: gamemap,
+        hero: {
+          coord: this.findTileInMap(gamemap, TILE_HERO)[0],
+          health: 100,
+          weapon: 7,
+          fight: true
+        },
+        enemies: this.findTileInMap(gamemap, TILE_ENEMY).map(e => {return {
+            x: e.x,
+            y: e.y,
+            health: 10 *(1+level),
+            weapon: 7 *(1+level)
+          };
+        })
+      };
     }
-    emptyMapWithWalls() {
-      return [
-        [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-        [1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-        [1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,1],
-        [1,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,1,0,0,0,0,0,0,1],
-        [1,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,1],
-        [1,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-        [1,0,0,0,0,0,1,0,0,0,0,0,1,1,0,0,1,0,0,0,1,0,0,1],
-        [1,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,1],
-        [1,0,1,1,1,1,1,1,1,1,1,0,0,0,0,0,1,0,0,0,1,0,0,1],
-        [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,1,1,0,1,1],
-        [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1],
-        [1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,0,0,0,1],
-        [1,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,1,1,1,1,0,0,0,1],
-        [1,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,1,1,1,1,0,0,0,1],
-        [1,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,1,1,1,1,0,0,0,1],
-        [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1],
-        [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-      ];
-    }
+
     render() {
-      var dungeon = this.state.dungeon;
+      var currentDungeon = this.state.dungeon;
       return (
         <div>
           <h3>Game</h3>
           <Info health={this.state.hero.health}
             weapon={this.state.hero.weapon}
-            level={this.state.hero.level}/>
+            level={this.state.level}/>
           <div className="dungeon">
-          {dungeon.map( (row, y) =>
+          {currentDungeon.map( (row, y) =>
             <div className="tile-row">
              { row.map((value, x) =>
                <Tile coord={[x,y]} type={value} />
@@ -271,7 +291,37 @@ Game.propTypes = {
   visibleRadius: React.PropTypes.number.isRequires
 }
 Game.defaultProps = {
-  visibleRadius: [12]
+  visibleRadius: [12],
+  dungeons: [
+    [
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      [1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,1],
+      // [1,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,1,0,0,0,0,0,0,1],
+      // [1,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,1],
+      // [1,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      // [1,0,0,0,0,0,1,0,0,0,0,0,1,1,0,0,1,0,0,0,1,0,0,1],
+      // [1,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,1],
+      // [1,0,1,1,1,1,1,1,1,1,1,0,0,0,0,0,1,0,0,0,1,0,0,1],
+      // [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,1,1,0,1,1],
+      // [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1],
+      // [1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,0,0,0,1],
+      // [1,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,1,1,1,1,0,0,0,1],
+      // [1,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,1,1,1,1,0,0,0,1],
+      // [1,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,1,1,1,1,0,0,0,1],
+      // [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    ],
+    [
+      [1, 1, 1, 1, 1],
+      [1, 0, 0, 0, 1],
+      [1, 0, 0, 0, 1],
+      [1, 0, 0, 0, 1],
+      [1, 0, 0, 0, 1],
+      [1, 0, 0, 0, 1],
+      [1, 1, 1, 1, 1],
+    ]
+  ]
 }
 
 ReactDOM.render(
