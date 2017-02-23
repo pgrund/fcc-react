@@ -84,12 +84,15 @@ div.tile.wall {
 }
 div.tile.hero>i,
 div.tile.hero>i:before,
+div.hero i:before,
 div.tile.weapon>i,
 div.tile.weapon>i:before {
   color: green;
 }
-div.tile.hero>i:before {
-  content: '\f007'
+div.tile.hero>i:before,
+div.hero i.fa:before {
+  content: '\f007';
+  padding-right: .5em;
 }
 
 div.tile.enemy>i,
@@ -114,5 +117,64 @@ div.tile.weapon>i:before {
 
 
 div.tile.blackedout {
-  background-color: black;
+  display: none
+}
+
+.container>.row {
+  margin: 10px;
+}
+div.info {
+  border: solid thin black;
+  border-radius: 5px 5px;
+  padding: 0;
+}
+div.info>div {
+  margin: 0;
+  padding-top: 10px;
+  padding-left: 0;
+  vertical-align: middle;
+}
+div.info>div:nth-of-type(1) {
+  margin-right: 15px;
+  padding-top: 0;
+}
+div.info div.pull-right>i.fa:before {
+  padding-right: 0;
+}
+div.info h2 {
+  writing-mode: vertical-rl;
+  margin: 0;
+  padding: 5px;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+div.messages {
+  height: 150px;
+  vertical-align: bottom;
+  overflow-y: auto;
+}
+.messages ul.fa-ul {
+  padding-top: 10px;
+}
+.messages ul.fa-ul>li.message {
+  border: solid thin darkgray;
+  border-radius: 10px 10px;
+  padding: 0 10px;
+}
+.messages ul.fa-ul>li.message.info {
+  border-color: lightblue;
+}
+.messages ul.fa-ul>li.message.warn {
+  border-color: orange;
+  font-weight: bold;
+}
+.messages ul.fa-ul>li.message.error {
+  border-color: darkred;
+  font-weight: bold;
+}
+.messages ul.fa-ul i.fa.fa-li.fa-trash {
+  color: red;
+  background-color; whitesmoke;
+  text-shadow: 1px 2px darkred;
 }

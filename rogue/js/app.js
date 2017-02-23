@@ -1,3 +1,6 @@
+const CONFIG = {
+
+}
 const TILE_HERO  = 5,
       TILE_ENEMY = 4,
      TILE_WEAPON = 3,
@@ -5,45 +8,104 @@ const TILE_HERO  = 5,
        TILE_WALL = 1,
       TILE_EMPTY = 0;
 
+const LOGLEVEL_DEBUG = 0,
+      LOGLEVEL_INFO = 1,
+      LOGLEVEL_WARN = 2,
+      LOGLEVEL_ERROR = 3;
+const LOGLEVEL = ['debug', 'info', 'warn', 'error'];
+const WEAPONS = ['stick', 'knife', 'dagger', 'sword'];
+
 class Tile extends React.Component {
   constructor(props){
     super(props);
     this.state = {
       x : props.coord[0],
-      y : props.coord[1],
-      visible: true
+      y : props.coord[1]
     }
   }
   render() {
     var names = ['type', 'wall', 'health', 'weapon', 'enemy', 'hero'];
-    return (this.state.visible ? <div className={"tile " + names[this.props.type]}><i className="fa"/></div> : <div className="tile blackedout"/> );
+    return (this.props.visible ? <div className={"tile " + names[this.props.type]}><i className="fa"/></div> : <div className="tile blackedout"/> );
   }
 }
 Tile.propTypes = {
   coord: React.PropTypes.array.isRequired,
-  type: React.PropTypes.number.isRequired
+  type: React.PropTypes.number.isRequired,
+  visible: React.PropTypes.bool
 }
 Tile.defaultProps = {
-  type: 0
+  type: 0,
+  visible: true
 }
 
-class Info extends React.Component {
+class HeroInfo extends React.Component {
   render() {
-    var weapons = ['stick', 'knife', 'dagger', 'sword'];
     return (
-      <ul className="info-bar">
-        <li>Health: {this.props.health}</li>
-        <li>Weapon: {weapons[Math.floor(this.props.weapon/7)]}</li>
-        <li>Attack: {this.props.weapon}</li>
-        <li>Dungeon Level: {this.props.level}</li>
-      </ul>
+      <div className="hero info row">
+        <div className="col-xs-2">
+          <h2>Hero</h2>
+        </div>
+        <div className="col-xs-9">
+          <div className="pull-right">
+            <i className="fa fa-4x text-right"/>
+          </div>
+          <ul className="list-unstyled">
+            <li>Health: {this.props.user.health}</li>
+            <li>Weapon: {WEAPONS[Math.floor(this.props.user.weapon/7)]}</li>
+            <li>Attack: {this.props.user.weapon}</li>
+            { this.props.user.experience != undefined ? <li>Experience: {this.props.user.experience}</li>:''}
+          </ul>
+        </div>
+      </div>
     );
   }
 }
-Info.propTypes = {
-  health: React.PropTypes.number.isRequired,
-  weapon: React.PropTypes.number.isRequired,
-  level: React.PropTypes.number.isRequired
+class EnemyInfo extends React.Component {
+  render() {
+    return (
+      <div className="enemy info">
+        <h2><i className="fa"/>Enemy</h2>
+        <ul>
+          <li>Health: {this.props.user.health}</li>
+          <li>Weapon: {WEAPONS[Math.floor(this.props.user.weapon/7)]}</li>
+          <li>Attack: {this.props.user.weapon}</li>
+        </ul>
+      </div>
+    );
+  }
+}
+class MessageBox extends React.Component {
+
+  render() {
+    if(this.props.messages.length > 0) {
+      var clearAll;
+      if (this.props.messages.length > 0 ) {
+          clearAll = <p><i className="fa fa-trash fa-2x text-danger" onClick={() => this.props.handleAck()}/> Clear all messages</p>
+      }
+      return (
+        <div className="messages">
+          <ul className="fa-ul">
+            {this.props.messages.sort((m1,m2) => m1.id < m2.id).map((m, idx, arr) =>
+              <li title={m.id} className={'message ' + LOGLEVEL[m.level]}>
+                <i className="fa-li fa fa-trash" onClick={() => this.props.handleAck(m.id)}/>
+                {m.message}
+              </li>
+            )}
+          </ul>
+          {clearAll}
+        </div>
+      );
+    }
+    return (<span />);
+  }
+}
+MessageBox.propTypes = {
+  handleAck: React.PropTypes.func.isRequired
+}
+MessageBox.defaultProps = {
+  handleAck: function(id) {
+    console.warn(`no function specified to acknowledge message ${id}`);
+  }
 }
 
 class Game extends React.Component {
@@ -55,27 +117,58 @@ class Game extends React.Component {
         level : 0,
         dungeon: dungeon.dungeon,
         hero: dungeon.hero,
-        enemies: dungeon.enemies
+        enemies: dungeon.enemies,
+        messages: []
       };
 
       this.generateMap = this.generateMap.bind(this);
       this.findTileInMap = this.findTileInMap.bind(this);
       this.placeTileOnMap = this.placeTileOnMap.bind(this);
       this.handleMove = this.handleMove.bind(this);
-      // this.fightEnemy = this.fightEnemy.bind(this);
-      // this.finishedDungeon = this.finishedDungeon.bind(this);
+      this.createMessage = this.createMessage.bind(this);
+      this.ackMessage = this.ackMessage.bind(this);
     }
 
     componentDidMount() {
       document.addEventListener("keydown", this.handleMove);
     }
 
+    ackMessage(id) {
+      if(id == undefined) {
+          console.log('ack all messages');
+          this.setState({
+            messages: []
+          });
+      } else {
+        console.log(`ack message with id ${id}`);
+        var msgs = this.state.messages.filter(m => m.id != id);
+        this.setState({
+          messages: msgs
+        });
+      }
+    }
+    createMessage(msg, level = LOGLEVEL_DEBUG) {
+      if(level >= this.props.logLevel) {
+        var m = {
+          message: msg,
+          level: level,
+          id: (new Date()).getTime()
+        };
+        var nextMessages = this.state.messages.concat(m)
+        this.setState({
+          messages: nextMessages
+        });
+      }
+    }
     findTileInMap(gameMap, tile) {
-      var res = []
-      for(let x = 0; x < gameMap.length; x++) {
-        for(let y = 0; y < gameMap[0].length; y++) {
-          if(gameMap[x][y] == tile) {
-            res.push({x: x, y: y});
+      if(gameMap == undefined) {
+        throw new Error('trying to find a tile on an undefined map')
+      }
+      var res = [];
+      for(var row = 0; row < gameMap.length; row++) {
+        for(var col = 0; col < gameMap[row].length; col++) {
+          if(gameMap[row][col] == tile) {
+            res.push({x: row, y: col});
           }
         }
       }
@@ -83,40 +176,55 @@ class Game extends React.Component {
       return res;
     }
 
-    finishedDungeon(map) {
-       if (this.findTileInMap(map, TILE_ENEMY).length == 0) {
+    finishedDungeon(state) {
+       if (this.findTileInMap(state.dungeon, TILE_ENEMY).length == 0 &&
+          this.props.dungeons.length == this.state.level+1) {
+         return 'finished';
+       } else if (this.findTileInMap(state.dungeon, TILE_ENEMY).length == 0) {
          return 'level completed';
-       } else if (false) {
-         //
+       } else if (state.hero.health < 0) {
+         return 'hero died'
        };
     }
-
 
     handleMove(event) {
       var game = this;
       var hero = this.state.hero;
 
-      var nextState = JSON.parse(JSON.stringify(this.state));
+      var nextState = {
+        dungeon: JSON.parse(JSON.stringify(this.state.dungeon)),
+        hero: JSON.parse(JSON.stringify(this.state.hero))
+      };
       var oldX = hero.coord.x,
           oldY = hero.coord.y;
 
       function fightEnemy(newX, newY) {
-        var enemy = nextState.enemies.find(e => e.x == newX && e.y == newY);
-        var hit = Math.floor(Math.random() * (hero.fight ? hero.weapon : enemy.weapon));
+        var { health, weapon } = game.state.enemies.find(e => e.x == newX && e.y == newY);
+        var hit = Math.floor(Math.random() * (hero.fight ? hero.weapon : weapon));
         console.log('FIGHTING!!');
 
         if(hero.fight) {
-          enemy.health -= hit;
-          console.log(`Hero's turn : enemy ${enemy.health} (-${hit})`);
+          game.setState({
+            enemies: game.state.enemies.map(e => {
+              if (e.x == newX && e.y == newY) {
+                return {
+                  health: health - hit,
+                  weapon : weapon,
+                  x: newX,
+                  y: newY
+                };
+              } else {
+                return e;
+              }})
+          });
+          game.createMessage(`Fighting, enemy gets hit (-${hit})`);
         } else {
           nextState.hero.health -= hit;
-          console.log(`Enemy's turn : hero ${nextState.hero.health} (-${hit})`);
+          game.createMessage(`Fighting, hero gets hit (-${hit})`);
         }
-        game.setState({
-          enemies: nextState.enemies
-        });
+
         nextState.hero.fight = !hero.fight;
-        return enemy.health <= 0;
+        return health <= 0;
       }
 
       function moveTo(dx, dy) {
@@ -131,13 +239,9 @@ class Game extends React.Component {
           nextState.dungeon[newX][newY] = TILE_HERO;
         }
 
-        var oldX = hero.coord.x,
-            oldY = hero.coord.y,
-            newX = hero.coord.x + dx,
-            newY = hero.coord.y + dy;
         // check out of boundary
         if( newX >= nextState.dungeon.length || newX < 0 ||
-            newY >= nextState.dungeon[0].length || newY < 0 ) {
+            newY >= nextState.dungeon[newX].length || newY < 0 ) {
               console.log('leaving worldmap');
               return;
         }
@@ -147,48 +251,49 @@ class Game extends React.Component {
             moveHero();
             break;
           case TILE_WALL:
-            console.log('bang your head !!!');
+            game.createMessage(`You're hitting the wall dude ...`);
             break;
           case TILE_HEALTH:
-            console.log('picked up some healing ...');
+            game.createMessage(`Found a medi-kit, health improved ...`, LOGLEVEL_INFO);
             nextState.hero.health += 20;
             moveHero();
             break;
           case TILE_WEAPON:
-            console.log('improved weapon');
+            game.createMessage(`Found a new weapon, let's get some fight ...`, LOGLEVEL_INFO);
             nextState.hero.weapon += 7;
             moveHero();
             break;
           case TILE_ENEMY:
             if(fightEnemy(newX, newY)) {
               moveHero();
-              var checkNextAction = game.finishedDungeon(nextState.dungeon);
+              game.createMessage('beatup enemy', LOGLEVEL_INFO);
+              var checkNextAction = game.finishedDungeon(nextState);
               if(checkNextAction == 'level completed') {
-                  console.log(`SUCCESS !!! you beatup all enemies in dungeon ${game.state.level}`);
+                  game.createMessage(`Level ${game.state.level} completed, move on ...`, LOGLEVEL_INFO);
                   var nextLevel = game.state.level+1;
                   var nextDungeon;
+                  nextDungeon = game.generateMap(nextLevel);
 
-                  try {
-                    nextDungeon = game.generateMap(nextLevel);
-                  } catch (e) {
-                    // could not get map for next Level, stick to old one
-                    console.error(e);
-                    nextDungeon = {
-                      dungeon: nextState.dungeon,
-                      hero: nextState.hero
-                    };
-                    nextLevel = game.state.level;
-                  }
                   nextState.dungeon = nextDungeon.dungeon;
                   nextState.hero.coord = nextDungeon.hero.coord;
-                  nextState.level = nextLevel
-                  nextState.enemies = nextDungeon.enemies;
+                  game.setState({
+                    level: nextLevel,
+                    enemies: nextDungeon.enemies
+                  });
 
                   document.removeEventListener("keydown", game.handleMove);
                   document.addEventListener("keydown", game.handleMove);
                   console.log('moving to next level', game.state);
-              } else if (checkNextAction == 'hero dead') {
-                console.log('You died !!');
+              } else if (checkNextAction == 'hero died') {
+                this.addMessage(`You died ...`);
+                document.removeEventListener("keydown", game.handleMove);
+              } else if (checkNextAction == 'finished') {
+                game.createMessage('CONGRATULATION!!! You finished all dungeons', LOGLEVEL_INFO);
+                nextDungeon = {
+                  dungeon: nextState.dungeon,
+                  hero: nextState.hero
+                };
+                nextLevel = game.state.level;
                 document.removeEventListener("keydown", game.handleMove);
               }
             }
@@ -213,7 +318,10 @@ class Game extends React.Component {
         default:
           console.log('not reacting on', event)
       }
-      this.setState(nextState);
+      this.setState({
+        dungeon: nextState.dungeon,
+        hero: nextState.hero
+      });
     }
 
     placeTileOnMap(gameMap, tile, distance = 5) {
@@ -267,20 +375,51 @@ class Game extends React.Component {
 
     render() {
       var currentDungeon = this.state.dungeon;
+      var {peek, hero} = this.state;
+      var {visibleRadius} = this.props;
+      function isTileVisible (x, y) {
+        if(!peek) {
+          var xMin = hero.coord.x - visibleRadius,
+              xMax = hero.coord.x + visibleRadius,
+              yMin = hero.coord.y - visibleRadius,
+              yMax = hero.coord.y + visibleRadius;
+          return (x >= xMin && x <= xMax) && (y >= yMin && y <= yMax);
+        }
+        return true;
+      }
+
       return (
-        <div>
-          <h3>Game</h3>
-          <Info health={this.state.hero.health}
-            weapon={this.state.hero.weapon}
-            level={this.state.level}/>
-          <div className="dungeon">
+        <div className="container">
+          <div className="row">
+            <h2 className="col-xs-offset-3 col-xs-6 text-center">Dungeon Level {this.state.level}</h2>
+            <p className="col-xs-offset-3 col-xs-6 row">
+              <div className="col-xs-6">
+                <i className={"fa fa-circle"+(this.state.peek ? ' ' : '-o ') +'text-info'} onClick={() => this.setState({peek : !this.state.peek})}/> peek map
+              </div>
+              <div className="col-xs-6">
+                <i className="fa fa-trash text-danger" onClick={() => this.ackMessage()}/> Clear all messages
+              </div>
+            </p>
+          </div>
+          <div className="dungeon row">
           {currentDungeon.map( (row, y) =>
             <div className="tile-row">
              { row.map((value, x) =>
-               <Tile coord={[x,y]} type={value} />
+               <Tile coord={[x,y]} type={value} visible={isTileVisible(y,x)}/>
              )}
             </div>
           )}
+          </div>
+          <div className="row">
+            <div className="col-xs-3">
+              <HeroInfo user={this.state.hero} />
+            </div>
+            <div className="col-xs-6">
+              <MessageBox messages={this.state.messages} handleAck={this.ackMessage}/>
+            </div>
+            <div className="col-xs-3">
+             { this.state.enemy ?  <EnemyInfo user={this.state.enemy} /> : '' }
+            </div>
           </div>
         </div>
       );
@@ -288,10 +427,12 @@ class Game extends React.Component {
 }
 
 Game.propTypes = {
-  visibleRadius: React.PropTypes.number.isRequires
+  visibleRadius: React.PropTypes.number.isRequired,
+  logLevel: React.PropTypes.number.isRequired
 }
 Game.defaultProps = {
-  visibleRadius: [12],
+  visibleRadius: 3,
+  logLevel: LOGLEVEL_INFO,
   dungeons: [
     [
       [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
