@@ -41,12 +41,12 @@ Tile.defaultProps = {
 class Controls extends React.Component {
   render() {
     return (
-    <div className={"row " + this.props.classes}>
-      <div className="col-xs-6">
-        <i className={"fa fa-circle"+(this.props.peek ? ' ' : '-o ') +'text-info'} onClick={this.props.onPeekToggle}/> peek map
+    <div className={"dc row " + this.props.classes}>
+      <div className="col-xs-6" onClick={this.props.onPeekToggle}>
+        <i className={"fa fa-peek-"+(this.props.peek ? 'on' : 'off')} /> peek map
       </div>
-      <div className="col-xs-6">
-        <i className="fa fa-trash text-danger" onClick={this.props.onAckAll}/> Clear all messages
+      <div className="col-xs-6" onClick={this.props.onAckAll}>
+        <i className="fa fa-ack" /> Clear all messages
       </div>
     </div>
     );
@@ -138,10 +138,20 @@ class Game extends React.Component {
       this.handleMove = this.handleMove.bind(this);
       this.createMessage = this.createMessage.bind(this);
       this.ackMessage = this.ackMessage.bind(this);
+      this.peekToggle = this.peekToggle.bind(this);
     }
 
     componentDidMount() {
       document.addEventListener("keydown", this.handleMove);
+    }
+
+    peekToggle() {
+      var nextPeek = !this.state.peek;
+      this.setState({peek : nextPeek});
+      if(nextPeek) {
+        console.log('set timeout, peek will close afetr 5sec ...');
+        setTimeout(this.peekToggle, 5000);
+      }
     }
 
     ackMessage(id) {
@@ -267,21 +277,25 @@ class Game extends React.Component {
           case TILE_HEALTH:
             game.createMessage(`Found a medi-kit, health improved ...`, LOGLEVEL_INFO);
             nextState.hero.health += 20;
+            nextState.hero.level += 1;
             moveHero();
             break;
           case TILE_WEAPON:
             game.createMessage(`Found a new weapon, let's get some fight ...`, LOGLEVEL_INFO);
             nextState.hero.weapon += 7;
+            nextState.hero.level += 2;
             moveHero();
             break;
           case TILE_ENEMY:
             if(fightEnemy(newX, newY)) {
               moveHero();
-              game.createMessage('beatup enemy', LOGLEVEL_INFO);
+              nextState.hero.level += 3;
+              game.createMessage('WON against enemy', LOGLEVEL_INFO);
               var checkNextAction = game.finishedDungeon(nextState);
               if(checkNextAction == 'level completed') {
                   game.createMessage(`Level ${game.state.level} completed, move on ...`, LOGLEVEL_INFO);
                   var nextLevel = game.state.level+1;
+                  nextState.hero.level += 7; // 3+7 = 10 for level complete
                   var nextDungeon;
                   nextDungeon = game.generateMap(nextLevel);
 
@@ -372,7 +386,8 @@ class Game extends React.Component {
           coord: this.findTileInMap(gamemap, TILE_HERO)[0],
           health: 100,
           weapon: 7,
-          fight: true
+          fight: true,
+          level: 0
         },
         enemies: this.findTileInMap(gamemap, TILE_ENEMY).map(e => {return {
             x: e.x,
@@ -414,7 +429,7 @@ class Game extends React.Component {
               level={hero.level} />
             <Controls classes="col-xs-offset-2 col-xs-8 row"
               peek={this.state.peek}
-              onPeekToggle={() => this.setState({peek : !this.state.peek})}
+              onPeekToggle={this.peekToggle}
               onAckAll={() => this.ackMessage()} />
           </div>
           <div className="dungeon row">

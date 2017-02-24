@@ -123,31 +123,6 @@ div.tile.blackedout {
 .container>.row {
   margin: 10px;
 }
-div.info {
-  border: solid thin black;
-  border-radius: 5px 5px;
-  padding: 0;
-}
-div.info>div {
-  margin: 0;
-  padding-top: 10px;
-  padding-left: 0;
-  vertical-align: middle;
-}
-div.info>div:nth-of-type(1) {
-  margin-right: 15px;
-  padding-top: 0;
-}
-div.info div.pull-right>i.fa:before {
-  padding-right: 0;
-}
-div.info h2 {
-  writing-mode: vertical-rl;
-  margin: 0;
-  padding: 5px;
-  font-size: 24px;
-  font-weight: bold;
-}
 
 div.messages {
   height: 150px;
@@ -178,3 +153,18 @@ div.messages {
   background-color; whitesmoke;
   text-shadow: 1px 2px darkred;
 }
+ .dc i.fa.fa-peek-on, .dc i.fa.fa-peek-off {
+   color: blue;
+ }
+ .dc i.fa.fa-peek-on:before {
+   content: '\f046';
+ }
+ .dc i.fa.fa-peek-off:before {
+   content: '\f096';
+ }
+ .dc i.fa.fa-ack {
+   color: red;
+ }
+ .dc i.fa.fa-ack:before {
+   content: '\f1f8';
+ }
