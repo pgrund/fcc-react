@@ -1,4 +1,9 @@
-const TILE_BOSS = 6,
+const TILE_WALL_TOP = 11,
+TILE_WALL_BOTTOM = 10,
+TILE_WALL_RIGHT = 9,
+ TILE_WALL_LEFT = 8,
+      TILE_TREE = 7,
+      TILE_BOSS = 6,
      TILE_ENEMY = 5,
       TILE_HERO = 4,
     TILE_WEAPON = 3,
@@ -10,6 +15,7 @@ const LOGLEVEL_DEBUG = 0,
       LOGLEVEL_INFO = 1,
       LOGLEVEL_WARN = 2,
       LOGLEVEL_ERROR = 3;
+const TILES = ['type', 'wall', 'health', 'weapon', 'hero', 'enemy', 'boss', 'tree', 'left wall', 'right wall', 'bottom wall', 'top wall'];
 const LOGLEVEL = ['debug', 'info', 'warn', 'error'];
 const WEAPONS = ['stick', 'knife', 'dagger', 'sword'];
 
@@ -22,8 +28,7 @@ class Tile extends React.Component {
     }
   }
   render() {
-    var names = ['type', 'wall', 'health', 'weapon', 'hero', 'enemy', 'boss'];
-    return (this.props.visible ? <div className={"tile " + names[this.props.type]}><i className="fa"/></div> : <div className="tile blackedout"/> );
+    return (this.props.visible ? <div className={"tile " + TILES[this.props.type]}><i className="fa"/></div> : <div className="tile blackedout"/> );
   }
 }
 Tile.propTypes = {
@@ -122,7 +127,7 @@ class Game extends React.Component {
       super(props);
       var dungeon = this.generateMap(0);
       this.state = {
-        peek : false,
+        peek : true,
         level : 0,
         dungeon: dungeon.dungeon,
         hero: dungeon.hero,
@@ -266,12 +271,13 @@ class Game extends React.Component {
               return;
         }
 
-        switch (nextState.dungeon[newX][newY]) {
+        var object = nextState.dungeon[newX][newY];
+        switch (object) {
           case TILE_EMPTY:
             moveHero();
             break;
-          case TILE_WALL:
-            game.createMessage(`You're hitting the wall dude ...`);
+          case TILE_WALL: case TILE_TREE:
+            game.createMessage(`You're hitting ${TILES[object]} dude ...`);
             break;
           case TILE_HEALTH:
             game.createMessage(`Found a medi-kit, health improved ...`, LOGLEVEL_INFO);
@@ -468,21 +474,21 @@ Game.defaultProps = {
   dungeons: [
     [
       [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-      [1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-      [1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,1],
-      [1,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,1,0,0,0,0,0,0,1],
-      [1,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,1],
-      [1,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-      [1,0,0,0,0,0,1,0,0,0,0,0,1,1,0,0,1,0,0,0,1,0,0,1],
-      [1,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,1],
-      [1,0,1,1,1,1,1,1,1,1,1,0,0,0,0,0,1,0,0,0,1,0,0,1],
-      [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,1,1,0,1,1],
-      [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1],
-      [1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,0,0,0,1],
-      [1,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,1,1,1,1,0,0,0,1],
-      [1,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,1,1,1,1,0,0,0,1],
-      [1,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,1,1,1,1,0,0,0,1],
-      [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1],
+      [8,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,9],
+      [8,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,9],
+      [8,0,0,0,0,0,1,1,1,1,8,0,0,0,0,0,1,0,0,0,0,0,0,9],
+      [8,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,9],
+      [8,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [8,0,0,0,0,0,1,0,0,0,0,0,1,1,0,0,1,0,0,0,1,0,0,9],
+      [8,0,0,0,1,1,1,0,0,0,0,0,7,7,0,0,1,0,0,0,1,0,0,9],
+      [8,0,1,1,1,1,1,1,1,1,1,0,0,0,0,0,1,0,0,0,1,0,0,9],
+      [8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,1,1,0,1,9],
+      [8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,9],
+      [8,0,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,0,0,0,9],
+      [8,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,1,1,1,1,0,0,0,9],
+      [8,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,1,1,1,1,0,0,0,9],
+      [8,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,1,1,1,1,0,0,0,9],
+      [8,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,9],
       [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
     ],
     [
