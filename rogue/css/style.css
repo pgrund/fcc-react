@@ -96,11 +96,14 @@ div.hero i.fa:before {
 }
 
 div.tile.enemy>i,
-div.tile.enemy>i:before {
+div.tile.boss>i {
   color: blue;
 }
 div.tile.enemy>i:before {
-  content: '\f21b'
+  content: '\f2c0';
+}
+div.tile.boss>i:before {
+  content:'\f21b';
 }
 
 div.tile.health>i,

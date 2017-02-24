@@ -1,12 +1,10 @@
-const CONFIG = {
-
-}
-const TILE_HERO  = 5,
-      TILE_ENEMY = 4,
-     TILE_WEAPON = 3,
-     TILE_HEALTH = 2,
-       TILE_WALL = 1,
-      TILE_EMPTY = 0;
+const TILE_BOSS = 6,
+     TILE_ENEMY = 5,
+      TILE_HERO = 4,
+    TILE_WEAPON = 3,
+    TILE_HEALTH = 2,
+      TILE_WALL = 1,
+     TILE_EMPTY = 0;
 
 const LOGLEVEL_DEBUG = 0,
       LOGLEVEL_INFO = 1,
@@ -24,7 +22,7 @@ class Tile extends React.Component {
     }
   }
   render() {
-    var names = ['type', 'wall', 'health', 'weapon', 'enemy', 'hero'];
+    var names = ['type', 'wall', 'health', 'weapon', 'hero', 'enemy', 'boss'];
     return (this.props.visible ? <div className={"tile " + names[this.props.type]}><i className="fa"/></div> : <div className="tile blackedout"/> );
   }
 }
@@ -149,7 +147,7 @@ class Game extends React.Component {
       var nextPeek = !this.state.peek;
       this.setState({peek : nextPeek});
       if(nextPeek) {
-        console.log('set timeout, peek will close afetr 5sec ...');
+        this.createMessage('peek into map, will close after 5sec ...', LOGLEVEL_INFO);
         setTimeout(this.peekToggle, 5000);
       }
     }
@@ -179,6 +177,7 @@ class Game extends React.Component {
         this.setState({
           messages: nextMessages
         });
+        setTimeout(() => this.ackMessage(m.id), 5000);
       }
     }
     findTileInMap(gameMap, tile) {
@@ -198,10 +197,10 @@ class Game extends React.Component {
     }
 
     finishedDungeon(state) {
-       if (this.findTileInMap(state.dungeon, TILE_ENEMY).length == 0 &&
+       if (this.findTileInMap(state.dungeon, TILE_BOSS).length == 0 &&
           this.props.dungeons.length == this.state.level+1) {
          return 'finished';
-       } else if (this.findTileInMap(state.dungeon, TILE_ENEMY).length == 0) {
+       } else if (this.findTileInMap(state.dungeon, TILE_BOSS).length == 0) {
          return 'level completed';
        } else if (state.hero.health < 0) {
          return 'hero died'
@@ -221,7 +220,7 @@ class Game extends React.Component {
 
       function fightEnemy(newX, newY) {
         var { health, weapon } = game.state.enemies.find(e => e.x == newX && e.y == newY);
-        var hit = Math.floor(Math.random() * (hero.fight ? hero.weapon : weapon));
+        var hit = Math.floor(Math.random() * (hero.fight ? hero.weapon * (1+hero.level/5): weapon));
         console.log('FIGHTING!!');
 
         if(hero.fight) {
@@ -286,6 +285,7 @@ class Game extends React.Component {
             nextState.hero.level += 2;
             moveHero();
             break;
+          case TILE_BOSS:
           case TILE_ENEMY:
             if(fightEnemy(newX, newY)) {
               moveHero();
@@ -379,7 +379,7 @@ class Game extends React.Component {
       }
       this.placeTileOnMap(gamemap, TILE_HEALTH);
       this.placeTileOnMap(gamemap, TILE_WEAPON);
-
+      this.placeTileOnMap(gamemap, TILE_BOSS);
       return {
         dungeon: gamemap,
         hero: {
@@ -387,7 +387,8 @@ class Game extends React.Component {
           health: 100,
           weapon: 7,
           fight: true,
-          level: 0
+          level: 1,
+          experience: 0
         },
         enemies: this.findTileInMap(gamemap, TILE_ENEMY).map(e => {return {
             x: e.x,
@@ -395,7 +396,13 @@ class Game extends React.Component {
             health: 10 *(1+level),
             weapon: 7 *(1+level)
           };
-        })
+        }).concat(this.findTileInMap(gamemap, TILE_BOSS).map(e => {return {
+            x: e.x,
+            y: e.y,
+            health: 20 *(1+level),
+            weapon: 14 *(1+level)
+          };
+        }))
       };
     }
 
@@ -479,13 +486,21 @@ Game.defaultProps = {
       [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
     ],
     [
-      [1, 1, 1, 1, 1],
-      [1, 0, 0, 0, 1],
-      [1, 0, 0, 0, 1],
-      [1, 0, 0, 0, 1],
-      [1, 0, 0, 0, 1],
-      [1, 0, 0, 0, 1],
-      [1, 1, 1, 1, 1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,1],
+      [1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,1],
+      [1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,1],
+      [1,0,0,0,0,1,0,0,0,0,0,0,0,0,1,1,0,1,1,1,0,0,0,0,0,1,1,1,0,1],
+      [1,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,1,1,1,0,1],
+      [1,1,0,1,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,1,1,1,0,1],
+      [1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,1,1,1,0,0,0,0,0,0,0,0,0,1],
+      [1,1,0,0,0,1,1,1,1,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,1],
+      [1,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,1,1],
+      [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,-1,-1,-1,-1,-1,-1,1,0,0,0,1],
+      [1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,0,1,1,-1,-1,-1,-1,-1,-1,1,0,0,0,1],
+      [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,-1,-1,-1,1,1,1,1,0,0,0,1],
+      [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,-1,-1,-1,1,0,0,0,0,0,0,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,-1,-1,-1,1,1,1,1,1,1,1,1]
     ]
   ]
 }
