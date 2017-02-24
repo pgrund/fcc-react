@@ -38,61 +38,72 @@ Tile.defaultProps = {
   visible: true
 }
 
+class Controls extends React.Component {
+  render() {
+    return (
+    <div className={"row " + this.props.classes}>
+      <div className="col-xs-6">
+        <i className={"fa fa-circle"+(this.props.peek ? ' ' : '-o ') +'text-info'} onClick={this.props.onPeekToggle}/> peek map
+      </div>
+      <div className="col-xs-6">
+        <i className="fa fa-trash text-danger" onClick={this.props.onAckAll}/> Clear all messages
+      </div>
+    </div>
+    );
+  }
+}
+Controls.propTypes = {
+  classes: React.Component.string,
+  peek: React.PropTypes.bool.isRequired,
+  onPeekToggle: React.PropTypes.func.isRequired,
+  onAckAll: React.PropTypes.func.isRequired
+}
+Controls.defaultProps = {
+  peek: false,
+  onPeekToggle: function() {
+    console.warn('no function specified to toggle peek!')
+  },
+  onAckAll: function() {
+    console.warn('no function specified to acknowledge messages!')
+  }
+}
 class HeroInfo extends React.Component {
   render() {
     return (
-      <div className="hero info row">
-        <div className="col-xs-2">
-          <h2>Hero</h2>
-        </div>
-        <div className="col-xs-9">
-          <div className="pull-right">
-            <i className="fa fa-4x text-right"/>
-          </div>
-          <ul className="list-unstyled">
-            <li>Health: {this.props.user.health}</li>
-            <li>Weapon: {WEAPONS[Math.floor(this.props.user.weapon/7)]}</li>
-            <li>Attack: {this.props.user.weapon}</li>
-            { this.props.user.experience != undefined ? <li>Experience: {this.props.user.experience}</li>:''}
-          </ul>
-        </div>
+      <div className={"row " + this.props.classes}>
+        <p className="col-xs-3">Health: {this.props.health}</p>
+        <p className="col-xs-3">Weapon: {WEAPONS[this.props.weapon/7]}</p>
+        <p className="col-xs-3">Attack: {this.props.weapon}</p>
+        <p className="col-xs-3">Experience: {this.props.level}</p>
       </div>
     );
   }
 }
-class EnemyInfo extends React.Component {
-  render() {
-    return (
-      <div className="enemy info">
-        <h2><i className="fa"/>Enemy</h2>
-        <ul>
-          <li>Health: {this.props.user.health}</li>
-          <li>Weapon: {WEAPONS[Math.floor(this.props.user.weapon/7)]}</li>
-          <li>Attack: {this.props.user.weapon}</li>
-        </ul>
-      </div>
-    );
-  }
+HeroInfo.propTypes = {
+  classes: React.PropTypes.string,
+  health: React.PropTypes.number.isRequired,
+  weapon: React.PropTypes.number.isRequired,
+  level: React.PropTypes.number.isRequired
 }
+HeroInfo.defaultProps = {
+  classes: '',
+  level: 0
+}
+
 class MessageBox extends React.Component {
 
   render() {
     if(this.props.messages.length > 0) {
-      var clearAll;
-      if (this.props.messages.length > 0 ) {
-          clearAll = <p><i className="fa fa-trash fa-2x text-danger" onClick={() => this.props.handleAck()}/> Clear all messages</p>
-      }
       return (
         <div className="messages">
           <ul className="fa-ul">
             {this.props.messages.sort((m1,m2) => m1.id < m2.id).map((m, idx, arr) =>
-              <li title={m.id} className={'message ' + LOGLEVEL[m.level]}>
+              <li title={new Date(m.id)} className={'message ' + LOGLEVEL[m.level]}>
                 <i className="fa-li fa fa-trash" onClick={() => this.props.handleAck(m.id)}/>
                 {m.message}
               </li>
             )}
           </ul>
-          {clearAll}
         </div>
       );
     }
@@ -377,6 +388,11 @@ class Game extends React.Component {
       var currentDungeon = this.state.dungeon;
       var {peek, hero} = this.state;
       var {visibleRadius} = this.props;
+      function isRowVisible(row) {
+        if(peek) return true;
+        return (row >= hero.coord.x - visibleRadius)
+          && (row <= hero.coord.x + visibleRadius);
+      }
       function isTileVisible (x, y) {
         if(!peek) {
           var xMin = hero.coord.x - visibleRadius,
@@ -391,19 +407,19 @@ class Game extends React.Component {
       return (
         <div className="container">
           <div className="row">
-            <h2 className="col-xs-offset-3 col-xs-6 text-center">Dungeon Level {this.state.level}</h2>
-            <p className="col-xs-offset-3 col-xs-6 row">
-              <div className="col-xs-6">
-                <i className={"fa fa-circle"+(this.state.peek ? ' ' : '-o ') +'text-info'} onClick={() => this.setState({peek : !this.state.peek})}/> peek map
-              </div>
-              <div className="col-xs-6">
-                <i className="fa fa-trash text-danger" onClick={() => this.ackMessage()}/> Clear all messages
-              </div>
-            </p>
+            <h2 className="col-xs-offset-2 col-xs-8 text-center">Dungeon Level {this.state.level}</h2>
+            <HeroInfo classes="col-xs-offset-2 col-xs-8 row"
+              health={hero.health}
+              weapon={hero.weapon}
+              level={hero.level} />
+            <Controls classes="col-xs-offset-2 col-xs-8 row"
+              peek={this.state.peek}
+              onPeekToggle={() => this.setState({peek : !this.state.peek})}
+              onAckAll={() => this.ackMessage()} />
           </div>
           <div className="dungeon row">
           {currentDungeon.map( (row, y) =>
-            <div className="tile-row">
+            <div className={isRowVisible(y) ? 'tile-row' : 'blackedout'}>
              { row.map((value, x) =>
                <Tile coord={[x,y]} type={value} visible={isTileVisible(y,x)}/>
              )}
@@ -411,14 +427,8 @@ class Game extends React.Component {
           )}
           </div>
           <div className="row">
-            <div className="col-xs-3">
-              <HeroInfo user={this.state.hero} />
-            </div>
-            <div className="col-xs-6">
+            <div className="col-xs-offset-2 col-xs-8">
               <MessageBox messages={this.state.messages} handleAck={this.ackMessage}/>
-            </div>
-            <div className="col-xs-3">
-             { this.state.enemy ?  <EnemyInfo user={this.state.enemy} /> : '' }
             </div>
           </div>
         </div>
