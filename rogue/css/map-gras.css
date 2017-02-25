@@ -1,0 +1,46 @@
+div.tile {
+  background-color: khaki !important;
+  background-size: 100%;
+}
+div.tile.wall.single {
+  background-image: url('./PNG/mapTile_115.png');
+}
+div.tile.wall {
+  background-image: url('./PNG/mapTile_022.png');
+}
+div.tile.left.wall {
+  background-image: url('./PNG/mapTile_021.png');
+}
+div.tile.right.wall {
+  background-image: url('./PNG/mapTile_023.png');
+}
+div.tile.bottom.wall {
+  background-image: url('./PNG/mapTile_037.png');
+}
+div.tile.top.wall {
+  background-image: url('./PNG/mapTile_007.png');
+}
+div.tile.top.left.wall {
+  background-image: url('./PNG/mapTile_006.png');
+}
+div.tile.top.right.wall {
+  background-image: url('./PNG/mapTile_008.png');
+}
+div.tile.bottom.right.wall {
+  background-image: url('./PNG/mapTile_038.png');
+}
+div.tile.bottom.left.wall {
+  background-image: url('./PNG/mapTile_036.png');
+}
+div.tile.corner.bottom.right.wall {
+  background-image: url('./PNG/mapTile_009.png');
+}
+div.tile.corner.bottom.left.wall {
+  background-image: url('./PNG/mapTile_010.png');
+}
+div.tile.corner.top.right.wall {
+  background-image: url('./PNG/mapTile_024.png');
+}
+div.tile.corner.top.left.wall {
+  background-image: url('./PNG/mapTile_025.png');
+}

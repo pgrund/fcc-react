@@ -1,21 +1,31 @@
-const TILE_WALL_TOP = 11,
-TILE_WALL_BOTTOM = 10,
-TILE_WALL_RIGHT = 9,
- TILE_WALL_LEFT = 8,
-      TILE_TREE = 7,
-      TILE_BOSS = 6,
-     TILE_ENEMY = 5,
-      TILE_HERO = 4,
-    TILE_WEAPON = 3,
-    TILE_HEALTH = 2,
-      TILE_WALL = 1,
-     TILE_EMPTY = 0;
+const
+TILE_WALL_BOTTOM_RIGHT = 15,
+TILE_WALL_BOTTOM_LEFT = 14,
+TILE_WALL_TOP_RIGHT = 13,
+ TILE_WALL_TOP_LEFT = 12,
+      TILE_WALL_TOP = 11,
+   TILE_WALL_BOTTOM = 10,
+    TILE_WALL_RIGHT = 9,
+     TILE_WALL_LEFT = 8,
+        TILE_SINGLE = 7,
+          TILE_BOSS = 6,
+         TILE_ENEMY = 5,
+          TILE_HERO = 4,
+        TILE_WEAPON = 3,
+        TILE_HEALTH = 2,
+          TILE_WALL = 1,
+         TILE_EMPTY = 0;
 
 const LOGLEVEL_DEBUG = 0,
       LOGLEVEL_INFO = 1,
       LOGLEVEL_WARN = 2,
       LOGLEVEL_ERROR = 3;
-const TILES = ['type', 'wall', 'health', 'weapon', 'hero', 'enemy', 'boss', 'tree', 'left wall', 'right wall', 'bottom wall', 'top wall'];
+const TILES = ['empty', 'wall', 'health', 'weapon', 'hero', 'enemy', 'boss', 'wall single', //7
+  'left wall', 'right wall', //9
+  'bottom wall', 'top wall', //11
+  'top left wall', 'top right wall', //13
+  'bottom left wall', 'bottom right wall' //15
+];
 const LOGLEVEL = ['debug', 'info', 'warn', 'error'];
 const WEAPONS = ['stick', 'knife', 'dagger', 'sword'];
 
@@ -125,10 +135,10 @@ MessageBox.defaultProps = {
 class Game extends React.Component {
     constructor(props) {
       super(props);
-      var dungeon = this.generateMap(0);
+      var dungeon = this.generateMap(this.props.startLevel);
       this.state = {
         peek : true,
-        level : 0,
+        level : this.props.startLevel,
         dungeon: dungeon.dungeon,
         hero: dungeon.hero,
         enemies: dungeon.enemies,
@@ -276,7 +286,7 @@ class Game extends React.Component {
           case TILE_EMPTY:
             moveHero();
             break;
-          case TILE_WALL: case TILE_TREE:
+          case TILE_WALL: case TILE_SINGLE:
             game.createMessage(`You're hitting ${TILES[object]} dude ...`);
             break;
           case TILE_HEALTH:
@@ -324,8 +334,14 @@ class Game extends React.Component {
                   dungeon: nextState.dungeon,
                   hero: nextState.hero
                 };
+                game.setState({
+                  dungeon: nextState.dungeon,
+                  hero: nextState.hero,
+                  peek: true
+                });
                 nextLevel = game.state.level;
                 document.removeEventListener("keydown", game.handleMove);
+                return;
               }
             }
             break;
@@ -374,10 +390,18 @@ class Game extends React.Component {
       gameMap[x][y] = tile;
     }
     generateMap(level = this.state.level) {
+      function applyRandomMapCss() {
+        var cssArray = ['./css/map-gras.css', './css/map-rock.css', './css/map-sand.css'];
+        console.log($('link#map').attr('href'));
+        $("link#map").attr("href",cssArray[Math.round(Math.random() * cssArray.length)]);
+      }
+
       var gamemap = this.props.dungeons[level];
       if(gamemap == undefined) {
         throw new Error(`no world specified for level ${level}`);
       }
+
+      applyRandomMapCss();
       // console.log(`selected dungeon ${level}\n${gamemap.map(row => row.join(',')).join('\n')}`);
       this.placeTileOnMap(gamemap, TILE_HERO);
       for(var i=0; i< 3; i++) {
@@ -466,52 +490,55 @@ class Game extends React.Component {
 
 Game.propTypes = {
   visibleRadius: React.PropTypes.number.isRequired,
-  logLevel: React.PropTypes.number.isRequired
+  logLevel: React.PropTypes.number.isRequired,
+  startLevel: React.PropTypes.number.isRequired
 }
 Game.defaultProps = {
   visibleRadius: 3,
   logLevel: LOGLEVEL_INFO,
+  startLevel: 0,
   dungeons: [
     [
-      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-      [8,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,9],
-      [8,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,9],
-      [8,0,0,0,0,0,1,1,1,1,8,0,0,0,0,0,1,0,0,0,0,0,0,9],
-      [8,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,9],
-      [8,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-      [8,0,0,0,0,0,1,0,0,0,0,0,1,1,0,0,1,0,0,0,1,0,0,9],
-      [8,0,0,0,1,1,1,0,0,0,0,0,7,7,0,0,1,0,0,0,1,0,0,9],
-      [8,0,1,1,1,1,1,1,1,1,1,0,0,0,0,0,1,0,0,0,1,0,0,9],
-      [8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,1,1,0,1,9],
-      [8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,9],
-      [8,0,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,0,0,0,9],
-      [8,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,1,1,1,1,0,0,0,9],
-      [8,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,1,1,1,1,0,0,0,9],
-      [8,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,1,1,1,1,0,0,0,9],
-      [8,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,9],
-      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [ 1,10,10,10,10,10,1 ,1 ,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10, 1],
+      [ 9, 0, 0, 0, 0, 0,14,15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8],
+      [ 9, 0, 0, 0, 0, 0, 0, 0, 0,12,13, 0, 0, 0, 0, 0,12,13, 0, 0, 0, 0, 0, 8],
+      [ 9, 0, 0, 0, 0, 0,12,11,11, 1, 9, 0, 0, 0, 0, 0, 8, 9, 0, 0, 0, 0, 0, 8],
+      [ 9, 0, 0, 0, 0, 0,14,10,10,10, 1,11,11,11,11,11, 1, 1,11,11,11,11,11, 1],
+      [ 9, 0, 0, 0, 0, 0, 0, 0, 0, 0,14,10, 1, 1,10,10, 1, 1,10,10, 1, 1,10, 1],
+      [ 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 9, 0, 0, 8, 9, 0, 0, 8,15, 0, 8],
+      [ 9, 0, 0, 0,12,11,13, 0, 0, 0, 0, 0,14,15, 0, 0,14,15, 0,12, 9, 0, 0, 8],
+      [ 9, 0, 0, 0,14,10,10,11,11,11,13, 0, 0, 0, 0, 0, 0, 0, 0, 8, 9, 0,12, 1],
+      [ 9, 0, 0, 0, 0, 0, 0,14,10,10,15, 0, 0, 0, 0, 0,12,13, 0,14,15, 0,14, 1],
+      [ 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 9, 0, 0, 0, 0, 0, 8],
+      [ 9, 0,12,11,11,11,11,11,11,11,11,11,11,11,13, 0, 8, 1,11,13, 0, 0, 0, 8],
+      [ 9, 0,14,10,10,10, 1, 1,10,10,10,10,10, 1, 9, 0, 8, 1, 1, 9, 0, 0, 0, 8],
+      [ 9, 0, 0, 0, 0, 0, 8, 9, 0, 0, 0, 0, 0, 8, 9, 0, 8, 1, 1, 9, 0, 0, 0, 8],
+      [ 9, 0, 0, 0, 0, 0,14,15, 0, 0, 0, 0, 0, 8, 9, 0,14,10,10,15, 0, 0, 0, 8],
+      [ 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 9, 0, 0, 0, 0, 0, 0, 0, 0, 8],
+      [ 1,11,11,11,11,11,11,11,11,11,11,11,11, 1, 1,11,11,11,11,11,11,11,11, 1],
     ],
     [
-      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-      [1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,1],
-      [1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,1],
-      [1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,1],
-      [1,0,0,0,0,1,0,0,0,0,0,0,0,0,1,1,0,1,1,1,0,0,0,0,0,1,1,1,0,1],
-      [1,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,1,1,1,0,1],
-      [1,1,0,1,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,1,1,1,0,1],
-      [1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,1,1,1,0,0,0,0,0,0,0,0,0,1],
-      [1,1,0,0,0,1,1,1,1,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,1],
-      [1,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,1,1],
-      [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,-1,-1,-1,-1,-1,-1,1,0,0,0,1],
-      [1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,0,1,1,-1,-1,-1,-1,-1,-1,1,0,0,0,1],
-      [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,-1,-1,-1,1,1,1,1,0,0,0,1],
-      [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,-1,-1,-1,1,0,0,0,0,0,0,1],
-      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,-1,-1,-1,1,1,1,1,1,1,1,1]
+      [ 1,10,10,10,10, 1, 1,10,10,10,10,10,10,10,10,10,10,10,10,10,10, 1, 1, 1,10,10,10,10,10, 1],
+      [ 9, 0, 0, 0, 0, 8, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 1, 9, 0, 0, 0, 0, 0, 8],
+      [ 9, 0, 0, 0, 0, 8, 9, 0, 0, 7, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 8, 1, 9, 0, 0, 0, 0, 0, 8],
+      [ 9, 0, 0, 0, 0, 8, 9, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,14,10,15, 0, 0, 0, 0, 0, 8],
+      [ 9, 0, 0, 0, 0, 8, 9, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 12,13,0, 0, 0, 0, 0,12,11,13, 0, 8],
+      [ 9, 0, 0, 0, 0, 8, 9, 0, 0, 0, 7, 0, 0, 0,12,13, 0, 0, 14, 1,13, 0, 0, 0, 0, 8, 1, 9, 0, 8],
+      [ 1,13, 0,12,11,10,15, 0, 0, 0, 0, 0, 0, 0, 8, 9, 0, 0, 0, 8, 9, 0, 0, 0, 0,14,10,15, 0, 8],
+      [ 1, 9, 0,14,15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 9, 0,12,11, 1,15, 0, 0, 0, 0, 0, 0, 0, 0, 8],
+      [ 1,15, 0, 0, 0, 0,12,11,13, 0, 0, 0, 0, 0,14,10,10,10, 1, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8],
+      [ 9, 0, 0, 0, 0, 0,14,10, 1,13, 0, 0, 0, 0, 0, 0, 0, 0, 8, 1,11,11,11,11,11,13, 0, 0,12, 1],
+      [ 1,13, 0, 0, 0, 0, 0, 0, 8, 1,11,11,11,11,11,13, 0, 0, 8, 1, 1, 1, 1, 1, 1, 9, 0, 0,14, 1],
+      [ 1,10,11,11,11,13, 0, 0,14,10,10,10,10,10,10,15, 0, 0, 8, 1, 1, 1, 1, 1, 1, 9, 0, 0, 0, 8],
+      [ 9, 0,14,10,10,15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 1, 1, 1, 1,10,10,15, 0, 0, 0, 8],
+      [ 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 1, 1, 1, 9, 0, 0, 0, 0, 0, 0, 8],
+      [ 1,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11, 1, 1, 1, 1, 1,11,11,11,11,11,11, 1],
+      // [ 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24],
     ]
   ]
 }
 
 ReactDOM.render(
-  <Game />,
+  <Game startLevel={1}/>,
   document.getElementById('app')
 );
