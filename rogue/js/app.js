@@ -137,12 +137,13 @@ class Game extends React.Component {
       super(props);
       var dungeon = this.generateMap(this.props.startLevel);
       this.state = {
-        peek : true,
+        peek : false,
         level : this.props.startLevel,
         dungeon: dungeon.dungeon,
         hero: dungeon.hero,
         enemies: dungeon.enemies,
-        messages: []
+        messages: [],
+        spriteClass: dungeon.spriteClass
       };
 
       this.generateMap = this.generateMap.bind(this);
@@ -319,7 +320,8 @@ class Game extends React.Component {
                   nextState.hero.coord = nextDungeon.hero.coord;
                   game.setState({
                     level: nextLevel,
-                    enemies: nextDungeon.enemies
+                    enemies: nextDungeon.enemies,
+                    spriteClass: nextDungeon.spriteClass
                   });
 
                   document.removeEventListener("keydown", game.handleMove);
@@ -390,19 +392,12 @@ class Game extends React.Component {
       gameMap[x][y] = tile;
     }
     generateMap(level = this.state.level) {
-      function applyRandomMapCss() {
-        var cssArray = ['./css/map-gras.css', './css/map-rock.css', './css/map-sand.css'];
-        console.log($('link#map').attr('href'));
-        $("link#map").attr("href",cssArray[Math.round(Math.random() * cssArray.length)]);
-      }
 
       var gamemap = this.props.dungeons[level];
       if(gamemap == undefined) {
         throw new Error(`no world specified for level ${level}`);
       }
 
-      applyRandomMapCss();
-      // console.log(`selected dungeon ${level}\n${gamemap.map(row => row.join(',')).join('\n')}`);
       this.placeTileOnMap(gamemap, TILE_HERO);
       for(var i=0; i< 3; i++) {
         this.placeTileOnMap(gamemap, TILE_ENEMY);
@@ -410,7 +405,9 @@ class Game extends React.Component {
       this.placeTileOnMap(gamemap, TILE_HEALTH);
       this.placeTileOnMap(gamemap, TILE_WEAPON);
       this.placeTileOnMap(gamemap, TILE_BOSS);
+
       return {
+        spriteClass : this.props.cssArray[Math.floor(Math.random() * this.props.cssArray.length)],
         dungeon: gamemap,
         hero: {
           coord: this.findTileInMap(gamemap, TILE_HERO)[0],
@@ -432,7 +429,7 @@ class Game extends React.Component {
             health: 20 *(1+level),
             weapon: 14 *(1+level)
           };
-        }))
+        })),
       };
     }
 
@@ -459,7 +456,7 @@ class Game extends React.Component {
       return (
         <div className="container">
           <div className="row">
-            <h2 className="col-xs-offset-2 col-xs-8 text-center">Dungeon Level {this.state.level}</h2>
+            <h2 title={this.state.spriteClass} className="col-xs-offset-2 col-xs-8 text-center">Dungeon Level {this.state.level}</h2>
             <HeroInfo classes="col-xs-offset-2 col-xs-8 row"
               health={hero.health}
               weapon={hero.weapon}
@@ -469,7 +466,7 @@ class Game extends React.Component {
               onPeekToggle={this.peekToggle}
               onAckAll={() => this.ackMessage()} />
           </div>
-          <div className="dungeon row">
+          <div className={"dungeon row " + this.state.spriteClass}>
           {currentDungeon.map( (row, y) =>
             <div className={isRowVisible(y) ? 'tile-row' : 'blackedout'}>
              { row.map((value, x) =>
@@ -491,12 +488,15 @@ class Game extends React.Component {
 Game.propTypes = {
   visibleRadius: React.PropTypes.number.isRequired,
   logLevel: React.PropTypes.number.isRequired,
-  startLevel: React.PropTypes.number.isRequired
+  startLevel: React.PropTypes.number.isRequired,
+  cssArray: React.PropTypes.array.isRequired
 }
 Game.defaultProps = {
   visibleRadius: 3,
   logLevel: LOGLEVEL_INFO,
   startLevel: 0,
+  cssArray: ['gras', 'rock', 'sand', 'ice'],
+    // './css/map-gras.css', './css/map-rock.css', './css/map-sand.css', './css/map-ice.css'],
   dungeons: [
     [
       [ 1,10,10,10,10,10,1 ,1 ,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10, 1],
@@ -539,6 +539,6 @@ Game.defaultProps = {
 }
 
 ReactDOM.render(
-  <Game startLevel={1}/>,
+  <Game />,
   document.getElementById('app')
 );
